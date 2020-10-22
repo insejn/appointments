@@ -25,7 +25,7 @@ $appointment = $appointment ? $appointment : get_wc_appointment( 0 );
 
 <?php do_action( 'woocommerce_email_header', $email_heading, $email ); ?>
 
-<?php if ( $appointment->get_start_date( wc_date_format(), '' ) === date( wc_date_format() ) ) : ?>
+<?php if ( $appointment->get_start_date( wc_appointments_date_format(), '' ) === date( wc_appointments_date_format() ) ) : ?>
 	<p><?php esc_html_e( 'Your appointment will take place today.', 'woocommerce-appointments' ); ?></p>
 <?php else : ?>
 	<p>

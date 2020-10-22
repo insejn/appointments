@@ -484,6 +484,8 @@ class WC_Appointment_Data_Store extends WC_Data_Store_WP {
 			$query_select .= " LEFT JOIN {$wpdb->postmeta} {$key} ON p.ID = {$key}.post_id AND {$key}.meta_key = '{$key}'";
 		}
 
+		#echo '<pre>' . var_export( "{$query_select} {$query_where} {$query_order} {$query_limit};", true ) . '</pre>';
+
 		return array_filter(
 			wp_parse_id_list(
 				$wpdb->get_col(
@@ -784,5 +786,68 @@ class WC_Appointment_Data_Store extends WC_Data_Store_WP {
 		);
 
 		return array_map( 'get_wc_appointment', $appointment_ids );
+	}
+
+	/**
+	 * Search appointment data for a term and return ids.
+	 *
+	 * @since 4.10.2
+	 *
+	 * @param  string $term Searched term.
+	 * @return array of ids
+	 */
+	public function search_appointments( $term ) {
+		global $wpdb;
+
+		$search_fields = array_map(
+			'wc_clean',
+			apply_filters( 'woocommerce_appointment_search_fields', array() )
+		);
+		$appointment_ids   = array();
+
+		if ( is_numeric( $term ) ) {
+			$appointment_ids[] = absint( $term );
+		}
+
+		if ( ! empty( $search_fields ) ) {
+			$appointment_ids = array_unique(
+				array_merge(
+					$appointment_ids,
+					$wpdb->get_col(
+						$wpdb->prepare(
+							"SELECT DISTINCT p1.post_id FROM {$wpdb->postmeta} p1 WHERE p1.meta_value LIKE %s AND p1.meta_key IN ('" . implode( "','", array_map( 'esc_sql', $search_fields ) ) . "')", // @codingStandardsIgnoreLine
+							'%' . $wpdb->esc_like( wc_clean( $term ) ) . '%'
+						)
+					)
+				)
+			);
+		}
+
+		$appointment_ids = array_unique(
+			array_merge(
+				$appointment_ids,
+				$wpdb->get_col(
+					$wpdb->prepare(
+						"SELECT p.id
+						FROM {$wpdb->prefix}posts p
+						INNER JOIN $wpdb->users u ON p.post_author = u.id
+						WHERE display_name LIKE %s OR user_nicename LIKE %s",
+						'%' . $wpdb->esc_like( wc_clean( $term ) ) . '%',
+						'%' . $wpdb->esc_like( wc_clean( $term ) ) . '%'
+					)
+				),
+				$wpdb->get_col(
+					$wpdb->prepare(
+						"SELECT pm.post_id
+						FROM {$wpdb->prefix}postmeta pm
+						INNER JOIN {$wpdb->prefix}posts p ON p.id = pm.meta_value
+						WHERE meta_key = '_appointment_product_id' AND p.post_title LIKE %s",
+						'%' . $wpdb->esc_like( wc_clean( $term ) ) . '%'
+					)
+				)
+			)
+		);
+
+		return apply_filters( 'woocommerce_appointment_search_results', $appointment_ids, $term, $search_fields );
 	}
 }

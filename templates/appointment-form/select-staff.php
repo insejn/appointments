@@ -11,13 +11,14 @@
  * the readme will list any important changes.
  *
  * @see         https://docs.woocommerce.com/document/template-structure/
- * @version     3.2.0
+ * @version     4.9.8
  * @since       3.4.0
  */
 
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit;
 
+wp_dequeue_script( 'selectWoo' );
 wp_enqueue_script( 'select2' );
 wp_enqueue_script( 'wc-appointments-staff-picker' );
 

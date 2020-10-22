@@ -580,12 +580,12 @@ class WC_Appointments_Integration_Polylang {
 
 			// Translate date
 			if ( ! empty( $appointment['date'] ) && ! empty( $appointment['_date'] ) ) {
-				$appointment['date'] = date_i18n( wc_date_format(), strtotime( $appointment['_date'] ) );
+				$appointment['date'] = date_i18n( wc_appointments_date_format(), strtotime( $appointment['_date'] ) );
 			}
 
 			// Translate time
 			if ( ! empty( $appointment['time'] ) && ! empty( $appointment['_time'] ) ) {
-				$appointment['time'] = date_i18n( get_option( 'time_format' ), strtotime( "{$appointment['_year']}-{$appointment['_month']}-{$appointment['_day']} {$appointment['_time']}" ) );
+				$appointment['time'] = date_i18n( wc_appointments_time_format(), strtotime( "{$appointment['_year']}-{$appointment['_month']}-{$appointment['_day']} {$appointment['_time']}" ) );
 			}
 
 			// We need to set the price

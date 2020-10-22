@@ -99,7 +99,7 @@
 					'position'      : 'fixed',
 					'top'           : scrollTopOffset,
 					'width'         : contentWrapWidth,
-					'z-index'       : '10'
+					'z-index'       : '11'
 				} );
 				floatingBody.css( {
 					'margin-top': headerHeight
@@ -234,7 +234,7 @@
 								$past_on_cal    = date( 'Y-m-d', strtotime( $day ) ) < date( 'Y-m-d', $current_timestamp );
 								$current_class .= $past_on_cal ? ' past' : '';
 								echo "<div class='header_column$current_class' data-time='" . date( 'Y-m-d', strtotime( $day ) ) . "'>";
-									echo '<div class="header_label"><a href="' . esc_url( admin_url( 'edit.php?post_type=wc_appointment&page=appointment_calendar&view=day&tab=calendar&calendar_day=' . date( 'Y-m-d', strtotime( $day ) ) ) ) . '" title="' . esc_attr( date( wc_date_format(), strtotime( $day ) ) ) . '">' . esc_attr( date( 'D', strtotime( $day ) ) ) . ' <span class="daynum">' . esc_attr( date( 'j', strtotime( $day ) ) ) . '</span></a></div>';
+									echo '<div class="header_label"><a href="' . esc_url( admin_url( 'edit.php?post_type=wc_appointment&page=appointment_calendar&view=day&tab=calendar&calendar_day=' . date( 'Y-m-d', strtotime( $day ) ) ) ) . '" title="' . esc_attr( date( wc_appointments_date_format(), strtotime( $day ) ) ) . '">' . esc_attr( date( 'D', strtotime( $day ) ) ) . ' <span class="daynum">' . esc_attr( date( 'j', strtotime( $day ) ) ) . '</span></a></div>';
 									echo '<div class="header_allday">';
 										echo '<div class="events allday">';
 											$this->list_events(
@@ -257,7 +257,7 @@
 							<?php
 							for ( $i = 0; $i < 24; $i ++ ) :
 								if ( 24 != $i ) {
-									echo '<div class="hour_label"><label>' . esc_attr( date_i18n( wc_time_format(), strtotime( "midnight +{$i} hour" ) ) ) . '</label></div>';
+									echo '<div class="hour_label"><label>' . esc_attr( date_i18n( wc_appointments_time_format(), strtotime( "midnight +{$i} hour" ) ) ) . '</label></div>';
 								}
 							endfor;
 							?>

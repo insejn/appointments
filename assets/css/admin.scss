@@ -41,6 +41,20 @@ table.wp-list-table span.product-type.appointment:before {
 		   color: $grey;
 		}
 
+		// Addons.
+		.wc-item-meta {
+			margin: 0;
+			strong {
+				font-weight: 400;
+			}
+			li:last-child {
+				margin: 0;
+			}
+			p {
+				color: $grey;
+			}
+		}
+
 		// Columns.
 		th.column-appointment_id {
 		    width: 30ch;
@@ -97,7 +111,10 @@ table.wp-list-table span.product-type.appointment:before {
 }
 
 #woocommerce-appointment-data {
-	h2.hndle, h3.hndle, .handlediv {
+	h2.hndle,
+	h3.hndle,
+	.handlediv,
+	.postbox-header {
 		display: none;
 	}
 	.inside {
@@ -899,6 +916,25 @@ table.wp-list-table span.product-type.appointment:before {
 			}
 		}
 	}
+	.calendar_filter {
+		display: inline-block;
+		position: relative;
+		width: 100%;
+		.date_from,
+		.date_to {
+			padding: 7px 7px 7px 35px;
+		}
+		.ui-datepicker-trigger {
+			background: transparent;
+			border: 0;
+			color: #777;
+			margin: -10px 0 0 10px;
+			padding: 0;
+			position: absolute;
+				left: 0;
+				top: 50%;
+		}
+	}
 }
 
 @media only screen and (max-width: 580px) {
@@ -926,7 +962,7 @@ table.wp-list-table span.product-type.appointment:before {
 #wca-dialog-container-add-appointment {
 	display: none;
 	position: relative;
-	z-index: 10;
+	z-index: 11;
 }
 
 #wca-dialog-backdrop {
@@ -1090,6 +1126,16 @@ table.wp-list-table span.product-type.appointment:before {
 			width: 90px;
 			text-align: left;
 			color: $subtext;
+		}
+		// Addons.
+		.wc-item-meta {
+			margin: 0;
+			p {
+				margin: 5px 0 0;
+			}
+			li:last-child {
+				margin: 0;
+			}
 		}
 	}
 	a {
@@ -1418,7 +1464,7 @@ div.wca-dialog-input {
 				}
 				select {
 					width: 100%;
-					padding: 4px 6px;
+					padding: 0 24px 0 8px;
 					margin: 0;
 					height: 35px;
 				}
@@ -1502,6 +1548,14 @@ div.wca-dialog-input {
 	.appointment-day-restriction {
 		table {
 			border: 0;
+			label {
+				display: block;
+				float: none;
+				width: auto;
+			}
+			input.checkbox {
+				float: none;
+			}
 		}
 	}
 }

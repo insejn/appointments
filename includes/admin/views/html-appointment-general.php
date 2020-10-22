@@ -221,17 +221,33 @@ defined( 'ABSPATH' ) || exit;
 		</select>
 		<span class="description"><?php esc_html_e( 'before the start date.', 'woocommerce-appointments' ); ?></span>
 	</p>
-	<script type="text/javascript">
-		jQuery( '._tax_status_field' ).closest( '.show_if_simple' ).addClass( 'show_if_appointment' );
-		jQuery( 'select#_wc_appointment_duration_unit, select#_wc_appointment_duration_type, input#_wc_appointment_duration' ).change(function(){
-			if ( [ 'day', 'month' ].includes( jQuery('select#_wc_appointment_duration_unit').val() ) && '1' == jQuery('input#_wc_appointment_duration').val() && 'customer' === jQuery('select#_wc_appointment_duration_type').val() ) {
-				jQuery('p._wc_appointment_enable_range_picker_field').show();
-			} else {
-				jQuery('p._wc_appointment_enable_range_picker_field').hide();
-			}
-		});
-		jQuery( '#_wc_appointment_duration_unit' ).change();
-	</script>
+	<?php
+	woocommerce_wp_checkbox(
+		array(
+			'id'          => '_wc_appointment_user_can_reschedule',
+			'label'       => __( 'Can be rescheduled?', 'woocommerce-appointments' ),
+			'value'       => $appointable_product->get_user_can_reschedule( 'edit' ) ? 'yes' : 'no',
+			'description' => __( 'Check this box if appointment can be rescheduled by the customer.', 'woocommerce-appointments' ),
+		)
+	);
+
+	$reschedule_limit      = max( absint( $appointable_product->get_reschedule_limit( 'edit' ) ), 1 );
+	$reschedule_limit_unit = $appointable_product->get_reschedule_limit_unit( 'edit' );
+	if ( '' == $reschedule_limit_unit ) {
+		$reschedule_limit_unit = 'day';
+	}
+	?>
+	<p class="form-field appointment-reschedule-limit">
+		<label for="_wc_appointment_reschedule_limit"><?php esc_html_e( 'Rescheduled at least', 'woocommerce-appointments' ); ?></label>
+		<input type="number" name="_wc_appointment_reschedule_limit" id="_wc_appointment_reschedule_limit" value="<?php echo esc_html( $reschedule_limit ); ?>" step="1" min="1" style="margin-right: 7px; width: 4em;">
+		<select name="_wc_appointment_reschedule_limit_unit" id="_wc_appointment_reschedule_limit_unit" class="short" style="width: auto; margin-right: 7px;">
+			<option value="month" <?php selected( $reschedule_limit_unit, 'month' ); ?>><?php esc_html_e( 'Month(s)', 'woocommerce-appointments' ); ?></option>
+			<option value="day" <?php selected( $reschedule_limit_unit, 'day' ); ?>><?php esc_html_e( 'Day(s)', 'woocommerce-appointments' ); ?></option>
+			<option value="hour" <?php selected( $reschedule_limit_unit, 'hour' ); ?>><?php esc_html_e( 'Hour(s)', 'woocommerce-appointments' ); ?></option>
+			<option value="minute" <?php selected( $reschedule_limit_unit, 'minute' ); ?>><?php esc_html_e( 'Minute(s)', 'woocommerce-appointments' ); ?></option>
+		</select>
+		<span class="description"><?php esc_html_e( 'before the start date.', 'woocommerce-appointments' ); ?></span>
+	</p>
 	<?php
 	woocommerce_wp_checkbox(
 		array(
@@ -242,6 +258,10 @@ defined( 'ABSPATH' ) || exit;
 		)
 	);
 	?>
+	<script type="text/javascript">
+		jQuery( '._tax_status_field' ).closest( '.show_if_simple' ).addClass( 'show_if_appointment' );
+		jQuery( '#_wc_appointment_duration_unit' ).change();
+	</script>
 </div>
 <div class="options_group show_if_appointment">
 	<?php

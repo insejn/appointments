@@ -59,8 +59,8 @@ class WC_Appointments_Cost_Calculation {
 
 		// Slot data.
 		self::$applied_cost_rules = array();
-		$slot_duration               = $product->get_duration();
-		$slot_unit                   = $product->get_duration_unit();
+		$slot_duration            = $product->get_duration();
+		$slot_unit                = $product->get_duration_unit();
 		// As we have converted the hourly duration earlier to minutes, convert back.
 		if ( isset( $data['_duration'] ) ) {
 			$slots_scheduled = 'hour' === $slot_unit ? ceil( absint( $data['_duration'] ) / 60 ) : absint( $data['_duration'] );
@@ -225,6 +225,7 @@ class WC_Appointments_Cost_Calculation {
 									if ( $rule['override'] && empty( $override_slots[ $check_date ] ) ) {
 										$override_slots[ $check_date ] = $rule['override'];
 									}
+
 									/*
 									 * Why do we break?
 									 * See: Applying a cost rule to an appointment slot

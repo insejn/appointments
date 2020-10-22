@@ -37,8 +37,9 @@ class WC_Appointments_REST_Slots_Controller extends WC_REST_Controller {
 			'/' . $this->rest_base,
 			array(
 				array(
-					'methods'  => WP_REST_Server::READABLE,
-					'callback' => array( $this, 'get_items' ),
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_items' ),
+					'permission_callback' => '__return_true',
 				),
 			)
 		);
@@ -223,10 +224,14 @@ class WC_Appointments_REST_Slots_Controller extends WC_REST_Controller {
 				$staff = array_intersect( $staff, $staff_ids );
 			}
 
+			// Get slots for days before and after, which accounts for timezone differences.
+			$start_date = strtotime( '-1 day', $min_date );
+			$end_date   = strtotime( '+1 day', $max_date );
+
 			foreach ( $staff as $staff_id ) {
 				// Get appointments.
 				$appointments          = array();
-				$existing_appointments = WC_Appointment_Data_Store::get_all_existing_appointments( $appointable_product, $min_date, $max_date, $staff_id );
+				$existing_appointments = WC_Appointment_Data_Store::get_all_existing_appointments( $appointable_product, $start_date, $end_date, $staff_id );
 				if ( ! empty( $existing_appointments ) ) {
 					foreach ( $existing_appointments as $existing_appointment ) {
 						#print '<pre>'; print_r( $existing_appointment->get_id() ); print '</pre>';
@@ -241,20 +246,26 @@ class WC_Appointments_REST_Slots_Controller extends WC_REST_Controller {
 						);
 					}
 				}
-				$slots           = $appointable_product->get_slots_in_range( $min_date, $max_date, array(), $staff_id, array(), $get_past_times );
+				$slots           = $appointable_product->get_slots_in_range( $start_date, $end_date, array(), $staff_id, array(), $get_past_times );
 				$available_slots = $appointable_product->get_time_slots(
 					array(
 						'slots'            => $slots,
 						'staff_id'         => $staff_id,
-						'from'             => $min_date,
-						'to'               => $max_date,
+						'from'             => $start_date,
+						'to'               => $end_date,
 						'appointments'     => $appointments,
 						'include_sold_out' => true,
 					)
 				);
 
 				foreach ( $available_slots as $timestamp => $data ) {
+					// Filter slots outside of timerange.
+					if ( $timestamp < $min_date || $timestamp >= $max_date ) {
+						continue;
+					}
+
 					unset( $data['staff'] );
+
 					$availability[] = array(
 						self::DATE          => $this->get_time( $timestamp, $timezone ),
 						self::DURATION      => $duration,

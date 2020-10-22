@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
 			$product_name = $product ? $product->get_title() : '';
 		}
 		?>
-		<select class="wc-product-search" name="filter_appointable_product" style="width: 200px;" data-allow_clear="true" data-placeholder="<?php esc_html_e( 'Filter by product', 'woocommerce-appointments' ); ?>" data-action="woocommerce_json_search_appointable_products">';
+		<select class="wc-product-search" name="filter_appointable_product" style="width: 200px;" data-allow_clear="true" data-placeholder="<?php esc_html_e( 'Filter by product', 'woocommerce-appointments' ); ?>" data-action="woocommerce_json_search_appointable_products">
 			<option value="<?php esc_attr_e( $product_id ); ?>" selected="selected"><?php esc_html_e( $product_name ); ?></option>';
 		</select>
 		<?php if ( current_user_can( 'manage_others_appointments' ) ) { ?>
@@ -82,7 +82,7 @@ defined( 'ABSPATH' ) || exit;
 			<a class="prev" href="<?php echo esc_url( add_query_arg( 'calendar_day', $prev_week ) ); ?>">&larr;</a>
 			<div class="week_picker">
 				<input type="hidden" name="calendar_day" class="calendar_day" value="<?php echo esc_attr( $day_formatted ); ?>" />
-				<input type="text" name="calendar_week" class="calendar_week date-picker" value="<?php echo esc_attr( $week_formatted ); ?>" placeholder="<?php echo esc_attr( wc_date_format() ); ?>" autocomplete="off" readonly="readonly" />
+				<input type="text" name="calendar_week" class="calendar_week date-picker" value="<?php echo esc_attr( $week_formatted ); ?>" placeholder="<?php echo esc_attr( wc_appointments_date_format() ); ?>" autocomplete="off" readonly="readonly" />
 			</div>
 			<a class="next" href="<?php echo esc_url( add_query_arg( 'calendar_day', $next_week ) ); ?>">&rarr;</a>
 		</div>
@@ -91,7 +91,7 @@ defined( 'ABSPATH' ) || exit;
 		<div class="date_selector">
 			<a class="prev" href="<?php echo esc_url( add_query_arg( 'calendar_day', $prev_day ) ); ?>">&larr;</a>
 			<div>
-				<input type="text" name="calendar_day" class="calendar_day date-picker" value="<?php echo esc_attr( $day_formatted ); ?>" placeholder="<?php echo esc_attr( wc_date_format() ); ?>" autocomplete="off" />
+				<input type="text" name="calendar_day" class="calendar_day date-picker" value="<?php echo esc_attr( $day_formatted ); ?>" placeholder="<?php echo esc_attr( wc_appointments_date_format() ); ?>" autocomplete="off" />
 			</div>
 			<a class="next" href="<?php echo esc_url( add_query_arg( 'calendar_day', $next_day ) ); ?>">&rarr;</a>
 		</div>

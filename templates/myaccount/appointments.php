@@ -13,7 +13,7 @@
  * the readme will list any important changes.
  *
  * @see         https://docs.woocommerce.com/document/template-structure/
- * @version     4.8.1
+ * @version     4.10.2
  * @since       3.4.0
  */
 
@@ -28,7 +28,7 @@ if ( ! empty( $tables ) ) : ?>
 
 		<h3><?php echo esc_html( $table['header'] ); ?></h3>
 
-		<table class="shop_table shop_table_responsive my_account_appointments <?php echo esc_html( $table_id ) . '_appointments'; ?>">
+		<table class="shop_table shop_table_responsive my_account_orders my_account_appointments <?php echo esc_html( $table_id ) . '_appointments'; ?>">
 			<thead>
 				<tr>
 					<th scope="col" class="appointment-id"><span class="nobr"><?php esc_html_e( 'Appointment', 'woocommerce-appointments' ); ?></span></th>
@@ -80,9 +80,12 @@ if ( ! empty( $tables ) ) : ?>
 						<td class="appointment-status" data-title="<?php esc_html_e( 'Status', 'woocommerce-appointments' ); ?>">
 							<?php echo esc_html( wc_appointments_get_status_label( $appointment->get_status() ) ); ?>
 						</td>
-						<td class="appointment-actions">
+						<td class="appointment-actions" data-title="<?php esc_html_e( 'Actions', 'woocommerce-appointments' ); ?>">
 							<?php if ( 'cancelled' !== $appointment->get_status() && 'completed' !== $appointment->get_status() && ! $appointment->passed_cancel_day() ) : ?>
-							<a href="<?php echo esc_url( $appointment->get_cancel_url() ); ?>" class="button cancel"><?php esc_html_e( 'Cancel', 'woocommerce-appointments' ); ?></a>
+							<a href="<?php echo esc_url( $appointment->get_cancel_url() ); ?>" class="woocommerce-button button cancel"><?php esc_html_e( 'Cancel', 'woocommerce-appointments' ); ?></a>
+							<?php endif ?>
+							<?php if ( 'cancelled' !== $appointment->get_status() && 'completed' !== $appointment->get_status() && ! $appointment->passed_reschedule_day() ) : ?>
+							<a href="<?php echo esc_url( $appointment->get_reschedule_url() ); ?>" class="woocommerce-button button cancel"><?php esc_html_e( 'Reschedule', 'woocommerce-appointments' ); ?></a>
 							<?php endif ?>
 						</td>
 					</tr>
@@ -97,7 +100,7 @@ if ( ! empty( $tables ) ) : ?>
 				<a href="<?php echo esc_url( wc_get_endpoint_url( $endpoint, $page - 1 ) ); ?>" class="woocommerce-button woocommerce-button--previous woocommerce-Button woocommerce-Button--previous button"><?php esc_html_e( 'Previous', 'woocommerce-appointments' ); ?></a>
 			<?php endif; ?>
 
-			<?php if ( $count >= $appointments_per_page ) : ?>
+			<?php if ( $count > $appointments_per_page ) : ?>
 				<a href="<?php echo esc_url( wc_get_endpoint_url( $endpoint, $page + 1 ) ); ?>" class="woocommerce-button woocommerce-button--next woocommerce-Button woocommerce-Button--next button"><?php esc_html_e( 'Next', 'woocommerce-appointments' ); ?></a>
 			<?php endif; ?>
 		</div>

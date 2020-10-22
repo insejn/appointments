@@ -47,12 +47,12 @@ class WC_Appointments_Cache {
 		return true === WC_APPOINTMENTS_DEBUG;
 	}
 
-	 /**
- 	 * Invalidate cache group.
- 	 *
- 	 * @param string $group Group of cache to clear.
- 	 * @since 4.8.10
- 	 */
+	/**
+	 * Invalidate cache group.
+	 *
+	 * @param string $group Group of cache to clear.
+	 * @since 4.8.10
+	 */
  	public static function invalidate_cache_group( $group ) {
  		wp_cache_set( 'wc_' . $group . '_cache_prefix', microtime(), $group );
  	}
@@ -81,7 +81,7 @@ class WC_Appointments_Cache {
 	 * @param int $expiration When to expire the cache.
 	 * @return void
 	 */
-	public static function set( $name = '', $data = null, $expiration = null ) {
+	public static function set( $name = '', $data = null, $expiration = YEAR_IN_SECONDS ) {
 		set_transient( $name, $data, $expiration );
 	}
 
@@ -148,7 +148,7 @@ class WC_Appointments_Cache {
 	 */
 	public static function delete_appointment_transients() {
 		global $wpdb;
-		$limit = 1000;
+		$limit = 500;
 
 		$affected_timeouts   = $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s LIMIT %d;", '_transient_timeout_schedule_fo_%', $limit ) );
 		$affected_transients = $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s LIMIT %d;", '_transient_schedule_fo_%', $limit ) );
@@ -164,7 +164,7 @@ class WC_Appointments_Cache {
 	 */
 	public static function delete_appointment_ts_transients() {
 		global $wpdb;
-		$limit = 1000;
+		$limit = 500;
 
 		$affected_timeouts   = $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s LIMIT %d;", '_transient_timeout_schedule_ts_%', $limit ) );
 		$affected_transients = $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s LIMIT %d;", '_transient_schedule_ts_%', $limit ) );
@@ -180,7 +180,7 @@ class WC_Appointments_Cache {
 	 */
 	public static function delete_appointment_dr_transients() {
 		global $wpdb;
-		$limit = 1000;
+		$limit = 500;
 
 		$affected_timeouts   = $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s LIMIT %d;", '_transient_timeout_schedule_dr_%', $limit ) );
 		$affected_transients = $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s LIMIT %d;", '_transient_schedule_dr_%', $limit ) );
@@ -196,7 +196,7 @@ class WC_Appointments_Cache {
 	 */
 	public static function delete_appointment_staff_transients() {
 		global $wpdb;
-		$limit = 1000;
+		$limit = 500;
 
 		$affected_timeouts   = $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s LIMIT %d;", '_transient_timeout_staff_ps_%', $limit ) );
 		$affected_transients = $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s LIMIT %d;", '_transient_staff_ps_%', $limit ) );

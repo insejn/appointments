@@ -15,7 +15,7 @@
  * the readme will list any important changes.
  *
  * @see     https://docs.woocommerce.com/document/template-structure/
- * @version 4.8.13
+ * @version 4.10.0
  * @since   3.4.0
  */
 
@@ -34,10 +34,12 @@ if ( $appointment_ids ) {
 					echo esc_html( sprintf( __( 'Appointment #%s', 'woocommerce-appointments' ), (string) $appointment->get_id() ) );
 					?>
 				</strong>
+				<?php if ( ! is_wc_endpoint_url( 'order-received' ) ) : ?>
 				&mdash;
 				<small class="status-<?php echo esc_attr( $appointment->get_status() ); ?>">
 					<?php echo esc_attr( wc_appointments_get_status_label( $appointment->get_status() ) ); ?>
 				</small>
+				<?php endif; ?>
 			</div>
 			<?php wc_appointments_get_summary_list( $appointment ); ?>
 		</div>

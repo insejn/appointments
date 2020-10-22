@@ -99,6 +99,8 @@ class WC_Product_Addons_Field_Custom extends WC_Product_Addons_Field {
 						'price_type'    => $this->addon['price_type'],
 						'duration'      => isset( $this->addon['duration'] ) ? $this->addon['duration'] : 0,
 						'duration_type' => isset( $this->addon['duration_type'] ) ? $this->addon['duration_type'] : '',
+						'hide_duration' => isset( $this->addon['wc_appointment_hide_duration_label'] ) && $this->addon['wc_appointment_hide_duration_label'] ? 1 : 0,
+						'hide_price'    => isset( $this->addon['wc_appointment_hide_price_label'] ) && $this->addon['wc_appointment_hide_price_label'] ? 1 : 0,
 					);
 				}
 				break;
@@ -115,6 +117,8 @@ class WC_Product_Addons_Field_Custom extends WC_Product_Addons_Field {
 						'price_type'    => $this->addon['price_type'],
 						'duration'      => '1' == $adjust_duration && isset( $this->addon['duration'] ) ? $this->addon['duration'] * $posted : 0,
 						'duration_type' => isset( $this->addon['duration_type'] ) ? $this->addon['duration_type'] : '',
+						'hide_duration' => isset( $this->addon['wc_appointment_hide_duration_label'] ) && $this->addon['wc_appointment_hide_duration_label'] ? 1 : 0,
+						'hide_price'    => isset( $this->addon['wc_appointment_hide_price_label'] ) && $this->addon['wc_appointment_hide_price_label'] ? 1 : 0,
 					);
 				}
 				break;
@@ -128,6 +132,8 @@ class WC_Product_Addons_Field_Custom extends WC_Product_Addons_Field {
 					'price_type'    => $this->addon['price_type'],
 					'duration'      => '1' == $adjust_duration && isset( $this->addon['duration'] ) ? $this->addon['duration'] : 0,
 					'duration_type' => isset( $this->addon['duration_type'] ) ? $this->addon['duration_type'] : '',
+					'hide_duration' => isset( $this->addon['wc_appointment_hide_duration_label'] ) && $this->addon['wc_appointment_hide_duration_label'] ? 1 : 0,
+					'hide_price'    => isset( $this->addon['wc_appointment_hide_price_label'] ) && $this->addon['wc_appointment_hide_price_label'] ? 1 : 0,
 				);
 				break;
 		}

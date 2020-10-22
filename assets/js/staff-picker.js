@@ -12,12 +12,20 @@ jQuery( function( $ ) {
 				var staff_label  = form.find( '.wc_appointments_field_staff' );
 				var staff_field  = staff_label.find( 'select' );
 				var staff_select = staff_field.select2( {
-					escapeMarkup: function( m ) {
-						return m;
+					escapeMarkup: function( markup ) {
+						// Do not escape HTML in the select options text.
+						return markup;
 					},
-
-					templateResult: wc_appointments_staff_picker.template_staff,
-					templateSelection: wc_appointments_staff_picker.template_staff,
+					templateSelection: function( data ) {
+						//console.log( wc_appointments_staff_picker.template_staff(data) );
+						return wc_appointments_staff_picker.template_staff( data );
+					},
+					templateResult: function( data ) {
+						//console.log( wc_appointments_staff_picker.template_staff(data) );
+						return wc_appointments_staff_picker.template_staff( data );
+					},
+					//templateResult: wc_appointments_staff_picker.template_staff,
+					//templateSelection: wc_appointments_staff_picker.template_staff,
 					minimumResultsForSearch: 6 // I only want the search box if there are enough results
 				} );
 

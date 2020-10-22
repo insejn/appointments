@@ -553,6 +553,8 @@ class WC_Product_Appointment_Rule_Manager {
 	public static function get_minutes_from_rules( $rules, $check_date, $appointable_minutes = array() ) {
 		$staff_minutes = array();
 
+		#print '<pre>'; print_r( $check_date ); print '</pre>';
+
 		foreach ( $rules as $rule ) {
 			// Something terribly wrong if a rule has no level.
 			if ( ! isset( $rule['level'] ) ) {
@@ -694,11 +696,13 @@ class WC_Product_Appointment_Rule_Manager {
 
 		// If "to" is before "from", it is safe to assume they mean the from is midnight
 		// php wraps 0 hours to "12AM the same day"
+		/*
 		if ( ( $to_hour <= $from_hour ) && ! empty( $range['day'] ) && ( $range['day'] !== $day_of_week ) ) {
 			$from_hour = 0;
 			#var_dump( $range['day'] );
 			#var_dump( $day_of_week );
 		}
+		*/
 
 		$minute_range = array( ( $from_hour * 60 ) + $from_min, ( $to_hour * 60 ) + $to_min - 1 );
 		$merge_ranges = array();
@@ -757,6 +761,7 @@ class WC_Product_Appointment_Rule_Manager {
 			$to                        = $range['to'];
 			$minutes['is_appointable'] = $range['rule'];
 		} elseif ( strpos( $rule['type'], 'time:' ) > -1 ) { // type: single week day with time
+			/*
 			$day_of_week_ranges = array();
 
 			#var_dump( 'works' );
@@ -772,6 +777,7 @@ class WC_Product_Appointment_Rule_Manager {
 				#var_dump( 'range_day: ' . $range['day'] );
 				#var_dump( 'day_of_week: ' . $day_of_week );
 				#var_dump( '<br/>' );
+				#print '<pre>'; print_r( $range ); print '</pre>';
 
 				if ( ( $range['to'] < $range['from'] ) && ( $range['day'] !== $day_of_week ) ) {
 					// Convert 8 to monday and add a day to all others for overnight rules;
@@ -786,12 +792,11 @@ class WC_Product_Appointment_Rule_Manager {
 			if ( ! empty( $range['day'] ) && ! in_array( $day_of_week, $day_of_week_ranges ) ) {
 				return $minutes;
 			}
-
-			/*
-			if (  $day_of_week != $range['day'] ) {
-				return  $minutes;
-			}
 			*/
+
+			if (  $day_of_week != $range['day'] ) {
+				return $minutes;
+			}
 
 			$from                      = $range['from'];
 			$to                        = $range['to'];
@@ -1032,12 +1037,12 @@ class WC_Product_Appointment_Rule_Manager {
 	 * Check a appointable product's availability rules against a time range and return if appointable or not.
 	 *
 	 * @param  WC_Product_Appointment $appointable_product
-	 * @param  int                    $staff_id
 	 * @param  int                    $start timestamp
 	 * @param  int                    $end timestamp
+	 * @param  int                    $staff_id
 	 * @return boolean
 	 */
-	public static function check_range_availability_rules( $appointable_product, $staff_id, $start, $end ) {
+	public static function check_range_availability_rules( $appointable_product, $start, $end, $staff_id = null ) {
 		// This is a time range.
 		if ( in_array( $appointable_product->get_duration_unit(), array( 'minute', 'hour' ) ) ) {
 			return self::check_availability_rules_against_time( $appointable_product, $start, $end, $staff_id );
@@ -1207,9 +1212,9 @@ class WC_Product_Appointment_Rule_Manager {
 				#print '<pre>'; print_r( 'ruleFROM: ' . $range['from'] . ' ruleTO: ' . $range['to'] . 'ruleday: ' . $range['day'] . '____' . 'calday: ' . $slot_day_no . ' nextday: ' . $slot_next_day ); print '</pre>';
 
 				// if the day doesn't match and the day is not zero skip the rule
-				// zero means all days. So rule only apply for zero or a matching day.
+				// zero means all days. So rule only applies for zero or a matching day.
 				if ( ! empty( $range['day'] ) && $slot_day_no != $range['day'] && $slot_next_day != $range['day'] ) {
-					#print '<pre>'; print_r( 'ruleday2: ' . $range['day'] . ' calday2: ' . $slot_day_no ); print '</pre>';
+					#print '<pre>'; print_r( 'ruleday2: ' . $range['day'] . ' calday2: ' . $slot_day_no . ' slot_next_day: ' . $slot_next_day ); print '</pre>';
 					continue;
 				}
 
@@ -1217,7 +1222,7 @@ class WC_Product_Appointment_Rule_Manager {
 				// if not time it must be time:day_number
 				if ( 'time' !== $type ) {
 					if ( ! strpos( $type, (string) $slot_day_no ) && ! strpos( $type, (string) $slot_next_day ) ) {
-						#print '<pre>'; print_r( 'rultype3: ' . $type . ' calday3: ' . $slot_day_no ); print '</pre>';
+						#print '<pre>'; print_r( 'rultype3: ' . $type . ' calday3: ' . $slot_day_no . ' slot_next_day: ' . $slot_next_day ); print '</pre>';
 						continue;
 					}
 				}
@@ -1260,21 +1265,29 @@ class WC_Product_Appointment_Rule_Manager {
 					// When slot start larger than end on the next day, set rule end
 					// on the next day.
 					$rule_end_time = strtotime( '+1 day', $rule_end_time );
-				} elseif ( ! $slot_next_day && ( $rule_start_time > $slot_start_time ) ) {
+				} elseif ( $slot_next_day && ( $rule_start_time > $slot_start_time ) ) {
 					#print '<pre>'; print_r( 'rule2 start -1 day' ); print '</pre>';
 					// When slot start is larger than end on the same day, set rule start
 					// on the day before.
 					$rule_start_time = strtotime( '-1 day', $rule_start_time );
+				} elseif ( ! $slot_next_day && ( $rule_start_time > $slot_start_time ) ) {
+					#print '<pre>'; print_r( 'rule3 start +1 day' ); print '</pre>';
+					// When slot start is larger than end on the same day, set rule start
+					// on the day before.
+					$rule_start_time = strtotime( '-1 day', $rule_end_time );
 				}
 
 				if ( $slot_next_day && ( date( 'ymd', $slot_start_time ) === date( 'ymd', $slot_end_time ) ) ) {
-					#print '<pre>'; print_r( 'rule3 start -1 day' ); print '</pre>';
+					#print '<pre>'; print_r( 'rule4 start -1 day' ); print '</pre>';
 					// When slot start is larger than end on the same day, set rule start
 					// on the day before.
 					$rule_start_time = strtotime( '-1 day', $rule_start_time );
 				}
 			}
 
+			#print '<pre>'; print_r( $range['day'] ); print '</pre>';
+			#print '<pre>'; print_r( $prev_day ); print '</pre>';
+			#print '<pre>'; print_r( $slot_next_day ); print '</pre>';
 			#print '<pre>'; print_r( date( 'ymd H:i', $rule_start_time ) .'__'.date( 'ymd H:i', $rule_end_time ) .'_||_'. date( 'ymd H:i', $slot_start_time ) .'__'.date( 'ymd H:i', $slot_end_time ) .'=='. $rule['qty'] .'_??_'. $type ); print '</pre>';
 
 			// Reverse date/day rule.
@@ -1398,7 +1411,7 @@ class WC_Product_Appointment_Rule_Manager {
 		}
 
 		// Rules.
-		$rules    = $appointable_product->get_availability_rules( $staff_id );
+		$rules = $appointable_product->get_availability_rules( $staff_id );
 
 		// Capacity.
 		$capacity = $appointable_product->get_available_qty( $staff_id );

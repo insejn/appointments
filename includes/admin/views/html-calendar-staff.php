@@ -67,7 +67,7 @@
 					'position'      : 'fixed',
 					'top'           : scrollTopOffset,
 					'width'         : contentWrapWidth,
-					'z-index'       : '10'
+					'z-index'       : '11'
 				} );
 				floatingBody.css( {
 					'margin-top': headerHeight
@@ -248,7 +248,7 @@
 							<?php
 							for ( $i = 0; $i < 24; $i ++ ) :
 								if ( 24 != $i ) {
-									echo '<div class="hour_label"><label>' . esc_attr( date_i18n( wc_time_format(), strtotime( "midnight +{$i} hour" ) ) ) . '</label></div>';
+									echo '<div class="hour_label"><label>' . esc_attr( date_i18n( wc_appointments_time_format(), strtotime( "midnight +{$i} hour" ) ) ) . '</label></div>';
 								}
 							endfor;
 							?>

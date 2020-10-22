@@ -25,11 +25,14 @@ class WC_Appointment_Order_Manager {
 		add_action( 'woocommerce_order_details_after_order_table', array( $this, 'order_again_button' ) );
 
 		// Add a "My Appointments" area to the My Account page.
-		add_action( 'init', array( $this, 'add_endpoint' ) );
-		add_filter( 'query_vars', array( $this, 'add_query_vars' ), 0 );
+		add_action( 'init', array( $this, 'add_endpoints' ) );
+		#add_filter( 'query_vars', array( $this, 'add_query_vars' ), 0 );
+		add_filter( 'woocommerce_get_query_vars', array( $this, 'add_query_vars' ), 0 );
 		add_filter( 'the_title', array( $this, 'endpoint_title' ) );
 		add_filter( 'woocommerce_account_menu_items', array( $this, 'my_account_menu_item' ) );
-		add_action( 'woocommerce_account_' . $this->get_endpoint() . '_endpoint', array( $this, 'endpoint_content' ) );
+		add_filter( 'woocommerce_account_menu_item_classes', array( $this, 'my_account_menu_item_classes' ), 10, 2 );
+		add_action( 'woocommerce_account_' . $this->get_appointments_endpoint() . '_endpoint', array( $this, 'appointments_endpoint_content' ) );
+		add_action( 'woocommerce_account_' . $this->get_reschedule_endpoint() . '_endpoint', array( $this, 'reschedule_endpoint_content' ) );
 
 		// Complete appointment orders if virtual.
 		add_filter( 'woocommerce_payment_complete_order_status', array( $this, 'complete_order' ), 20, 2 );
@@ -105,7 +108,7 @@ class WC_Appointment_Order_Manager {
 			'order/appointment-display.php',
 			array(
 				'appointment_ids' => $appointment_ids,
-				'endpoint'        => $this->get_endpoint(),
+				'endpoint'        => $this->get_appointments_endpoint(),
 				'is_rtl'          => is_rtl() ? 'right' : 'left',
 			),
 			'',
@@ -181,18 +184,29 @@ class WC_Appointment_Order_Manager {
 	 * @since 2.1.4
 	 * @see https://developer.wordpress.org/reference/functions/add_rewrite_endpoint/
 	 */
-	public function add_endpoint() {
-		add_rewrite_endpoint( $this->get_endpoint(), EP_PAGES );
+	public function add_endpoints() {
+		add_rewrite_endpoint( $this->get_appointments_endpoint(), EP_PAGES );
+		add_rewrite_endpoint( $this->get_reschedule_endpoint(), EP_PAGES );
 	}
 
 	/**
-	 * Return the my-account page endpoint.
+	 * Return the my-account/appointments page endpoint.
 	 *
 	 * @since 2.1.4
 	 * @return string
 	 */
-	public function get_endpoint() {
+	public function get_appointments_endpoint() {
 		return apply_filters( 'woocommerce_appointments_account_endpoint', 'appointments' );
+	}
+
+	/**
+	 * Return the my-account/appointments/reschedule page endpoint.
+	 *
+	 * @since 4.9.8
+	 * @return string
+	 */
+	public function get_reschedule_endpoint() {
+		return apply_filters( 'woocommerce_appointments_account_reschedule_endpoint', 'reschedule' );
 	}
 
 	/**
@@ -203,7 +217,8 @@ class WC_Appointment_Order_Manager {
 	 * @return array
 	 */
 	public function add_query_vars( $vars ) {
-		$vars[] = $this->get_endpoint();
+		$vars[] = $this->get_appointments_endpoint();
+		$vars[] = $this->get_reschedule_endpoint();
 		return $vars;
 	}
 
@@ -216,11 +231,33 @@ class WC_Appointment_Order_Manager {
 	 */
 	public function endpoint_title( $title ) {
 		global $wp_query;
-		$is_endpoint = isset( $wp_query->query_vars[ $this->get_endpoint() ] );
+		$is_appointments_endpoint = isset( $wp_query->query_vars[ $this->get_appointments_endpoint() ] );
+		$is_reschedule_endpoint   = isset( $wp_query->query_vars[ $this->get_reschedule_endpoint() ] );
 
-		if ( $is_endpoint && ! is_admin() && is_main_query() && in_the_loop() && is_account_page() ) {
-			$title = __( 'Appointments', 'woocommerce-appointments' );
-			remove_filter( 'the_title', array( $this, 'endpoint_title' ) );
+		#print '<pre>'; print_r( $wp_query->query_vars ); print '</pre>';
+
+		if ( ! is_admin() && is_main_query() && in_the_loop() && is_account_page() ) {
+			if ( $is_appointments_endpoint ) {
+				$page_number = intval( $wp_query->query_vars[ $this->get_appointments_endpoint() ] );
+				if ( 1 < $page_number ) {
+					$title = sprintf(
+						/* translators: %d: page number */
+						esc_html__( 'Appointments (page %d)', 'woocommerce-appointments' ),
+						esc_attr( $page_number )
+					);
+				} else {
+					$title = __( 'Appointments', 'woocommerce-appointments' );
+				}
+				remove_filter( 'the_title', array( $this, 'endpoint_title' ) );
+			} elseif ( $is_reschedule_endpoint ) {
+				$appointment_id = intval( $wp_query->query_vars[ $this->get_reschedule_endpoint() ] );
+				$title          = sprintf(
+					/* translators: %s: Appointment ID */
+					esc_html__( 'Reschedule #%d', 'woocommerce-appointments' ),
+					esc_attr( $appointment_id )
+				);
+				remove_filter( 'the_title', array( $this, 'endpoint_title' ) );
+			}
 		}
 
 		return $title;
@@ -241,7 +278,7 @@ class WC_Appointment_Order_Manager {
 		}
 
 		// Add appointments menu item.
-		$items[ $this->get_endpoint() ] = __( 'Appointments', 'woocommerce-appointments' );
+		$items[ $this->get_appointments_endpoint() ] = __( 'Appointments', 'woocommerce-appointments' );
 
 		// Add back the logout item.
 		if ( isset( $logout ) ) {
@@ -252,16 +289,98 @@ class WC_Appointment_Order_Manager {
 	}
 
 	/**
-	 * Endpoint HTML content.
+	 * Define CSS classes for each menu item.
+	 *
+	 * @since 4.9.8
+	 *
+	 * @param array  $classes
+	 * @param string $endpoint
+	 *
+	 * @return array
+	 */
+	public function my_account_menu_item_classes( $classes, $endpoint ) {
+		global $wp;
+
+		if ( 'appointments' === $endpoint && isset( $wp->query_vars['reschedule'] ) ) {
+			$classes[] = 'is-active';
+		}
+
+		return $classes;
+	}
+
+	/**
+	 * Appointments Endpoint HTML content.
 	 *
 	 * @param int $current_page
 	 *
 	 * @since    1.9.11
-	 * @version  3.4.0
+	 * @version  4.9.8
 	 */
-	public function endpoint_content( $current_page ) {
+	public function appointments_endpoint_content( $current_page ) {
 		$current_page = empty( $current_page ) ? 1 : absint( $current_page );
 		$this->my_appointments( $current_page );
+	}
+
+	/**
+	 * Reschedule Endpoint HTML content.
+	 *
+	 * @param int $current_page
+	 *
+	 * @since    4.9.8
+	 * @version  4.9.8
+	 */
+	public function reschedule_endpoint_content( $appointment_id ) {
+		$appointment       = get_wc_appointment( absint( $appointment_id ) );
+		$is_wc_appointment = is_a( $appointment, 'WC_Appointment' ) ? true : false;
+
+		#error_log( var_export( $appointment, true ) );
+
+		// Stop if not appointment object.
+		if ( ! $is_wc_appointment ) {
+			wc_add_notice( __( 'Invalid appointment.', 'woocommerce-appointments' ), 'error' );
+			exit;
+		}
+
+		// Get product object.
+		$product = $appointment->get_product();
+
+		// Stop if not appointable product.
+		if ( ! is_wc_appointment_product( $product ) ) {
+			wc_add_notice( __( 'Invalid appointment.', 'woocommerce-appointments' ), 'error' );
+			exit;
+		}
+
+		// Make sure only appointment duration is set to product.
+		$appointment_duration = $appointment->get_duration_parameters();
+		$product->set_duration( $appointment_duration['duration'] );
+		$product->set_duration_unit( $appointment_duration['duration_unit'] );
+
+		// Make sure only appointment staff is set to product.
+		if ( $appointment->get_staff_ids() ) {
+			#$product->set_staff_assignment( 'automatic' );
+			$product->set_staff_ids( $appointment->get_staff_ids() );
+			$product->set_staff_nopref( false );
+		}
+
+		// Get appointment form.
+		$appointment_form = new WC_Appointment_Form( $product );
+
+		// Show the reschedule template to customer.
+		wc_get_template(
+			'myaccount/reschedule.php',
+			apply_filters(
+				'woocommerce_appointments_reschedule_template_args',
+				array(
+					'endpoint'         => $this->get_reschedule_endpoint(),
+					'product'          => $product,
+					'appointment_form' => $appointment_form,
+					'appointment'      => $appointment,
+					'appointment_id'   => $appointment_id,
+				)
+			),
+			'',
+			WC_APPOINTMENTS_TEMPLATE_PATH
+		);
 	}
 
 	/**
@@ -283,7 +402,7 @@ class WC_Appointment_Order_Manager {
 				array(
 					'order_by'    => apply_filters( 'woocommerce_appointments_my_appointments_today_order_by', 'start_date' ),
 					'order'       => 'ASC',
-					'date_after'  => current_time( 'timestamp' ),
+					'date_after'  => strtotime( 'today', current_time( 'timestamp' ) ),
 					'date_before' => strtotime( 'tomorrow', current_time( 'timestamp' ) ),
 					'offset'      => ( $current_page - 1 ) * $appointments_per_page,
 					'limit'       => $appointments_per_page,
@@ -319,7 +438,7 @@ class WC_Appointment_Order_Manager {
 			)
 		);
 
-		#var_dump( $upcoming_appointments );
+		#print '<pre>'; print_r( $upcoming_appointments ); print '</pre>';
 
 		$tables = array();
 		if ( ! empty( $today_appointments ) ) {
@@ -348,7 +467,7 @@ class WC_Appointment_Order_Manager {
 				array(
 					'tables'                => apply_filters( 'woocommerce_appointments_account_tables', $tables ),
 					'page'                  => $current_page,
-					'endpoint'              => $this->get_endpoint(),
+					'endpoint'              => $this->get_appointments_endpoint(),
 					'appointments_per_page' => $appointments_per_page,
 				)
 			),

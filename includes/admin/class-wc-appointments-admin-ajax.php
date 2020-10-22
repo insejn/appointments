@@ -164,14 +164,14 @@ class WC_Appointments_Admin_Ajax {
 
 		// Last sycned event count, date, time.
 		/* translators: %1$s: date format, %2$s: time format */
-		$ls_message = sprintf( __( '%1$s, %2$s', 'woocommerce-appointments' ), date_i18n( wc_date_format(), $last_synced_timestamp ), date_i18n( wc_time_format(), $last_synced_timestamp ) );
+		$ls_message  = sprintf( __( '%1$s, %2$s', 'woocommerce-appointments' ), date_i18n( wc_appointments_date_format(), $last_synced_timestamp ), date_i18n( wc_appointments_time_format(), $last_synced_timestamp ) );
 		$ls_message .= ' - ';
 		if ( $user_id ) {
 			/* translators: %1$s: link to staff rules, %2$s: sync text */
 			$ls_message .= sprintf( '<a href="%1$s" onclick="location.reload()">%2$s</a>', esc_url( admin_url( "user-edit.php?user_id=$user_id#staff-details" ) ), __( 'check synced events', 'woocommerce-appointments' ) );
 		} else {
 			/* translators: %1$s: link to global rules, %2$s: sync text */
-			$ls_message .= sprintf( '<a href="%1$s">%2$s</a>', esc_url( admin_url( 'admin.php?page=wc-settings&tab=appointments' ) ), __( 'check synced events', 'woocommerce-appointments' ) );
+			$ls_message .= sprintf( '<a href="%1$s">%2$s</a>', esc_url( admin_url( 'admin.php?page=wc-settings&tab=appointments&view=synced' ) ), __( 'check synced events', 'woocommerce-appointments' ) );
 		}
 
 		wp_send_json(
@@ -345,8 +345,11 @@ class WC_Appointments_Admin_Ajax {
 
 		parse_str( $_POST['form'], $posted );
 
-		$product_id = $posted['add-to-cart'];
-		$product    = get_wc_product_appointment( $product_id );
+		$product_id = isset( $posted['add-to-cart'] ) ? $posted['add-to-cart'] : 0;
+		if ( ! $product_id && isset( $posted['appointable-product-id'] ) ) {
+			$product_id = $posted['appointable-product-id'];
+		}
+		$product = get_wc_product_appointment( $product_id );
 
 		if ( ! $product ) {
 			wp_send_json(
@@ -388,8 +391,8 @@ class WC_Appointments_Admin_Ajax {
 
 		wp_send_json(
 			array(
-				'result'    => 'SUCCESS',
-				'html'      => apply_filters( 'woocommerce_appointments_calculated_appointment_cost_success_output', $appointment_cost_html, $display_price, $product ),
+				'result' => 'SUCCESS',
+				'html'   => apply_filters( 'woocommerce_appointments_calculated_appointment_cost_success_output', $appointment_cost_html, $display_price, $product ),
 			)
 		);
 	}
@@ -401,7 +404,15 @@ class WC_Appointments_Admin_Ajax {
 		// Clean posted data.
 		$posted = array();
 		parse_str( $_POST['form'], $posted );
-		if ( empty( $posted['add-to-cart'] ) ) {
+
+		$product_id = isset( $posted['add-to-cart'] ) ? $posted['add-to-cart'] : 0;
+		if ( ! $product_id && isset( $posted['appointable-product-id'] ) ) {
+			$product_id = $posted['appointable-product-id'];
+		}
+
+		// Product Checking.
+		$product = get_wc_product_appointment( $product_id );
+		if ( ! $product ) {
 			return false;
 		}
 
@@ -409,13 +420,6 @@ class WC_Appointments_Admin_Ajax {
 		$addons_duration = isset( $_POST['duration'] ) ? $_POST['duration'] : 0;
 
 		#print '<pre>'; print_r( $addons_duration ); print '</pre>';
-
-		// Product Checking.
-		$product_id = $posted['add-to-cart'];
-		$product    = get_wc_product_appointment( $product_id );
-		if ( ! $product ) {
-			return false;
-		}
 
 		// Check selected date.
 		if ( ! empty( $posted['wc_appointments_field_start_date_year'] ) && ! empty( $posted['wc_appointments_field_start_date_month'] ) && ! empty( $posted['wc_appointments_field_start_date_day'] ) ) {
@@ -476,7 +480,7 @@ class WC_Appointments_Admin_Ajax {
 		#$logger->alert( wc_print_r( date( 'Y-m-d H:i:s', microtime( true ) ), true ) );
 
 		// Get appointments.
-		$appointments = array();
+		$appointments          = array();
 		$existing_appointments = WC_Appointment_Data_Store::get_all_existing_appointments( $product, $from, $to, $staff_id_to_check );
 		if ( ! empty( $existing_appointments ) ) {
 			foreach ( $existing_appointments as $existing_appointment ) {
@@ -548,7 +552,7 @@ class WC_Appointments_Admin_Ajax {
 			foreach ( $query_orders as $item ) {
 				$order = wc_get_order( $item->ID );
 				if ( is_a( $order, 'WC_Order' ) ) {
-					$found_orders[ $order->get_id() ] = $order->get_order_number() . ' &ndash; ' . date_i18n( wc_date_format(), strtotime( is_callable( array( $order, 'get_date_created' ) ) ? $order->get_date_created() : $order->post_date ) );
+					$found_orders[ $order->get_id() ] = $order->get_order_number() . ' &ndash; ' . date_i18n( wc_appointments_date_format(), strtotime( is_callable( array( $order, 'get_date_created' ) ) ? $order->get_date_created() : $order->post_date ) );
 				}
 			}
 		}

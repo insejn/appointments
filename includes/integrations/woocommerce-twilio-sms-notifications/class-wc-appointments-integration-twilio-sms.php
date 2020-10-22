@@ -5,7 +5,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * WooCommerce Twilio SMS Notifications integration class.
  *
- * Last compatibility check: WooCommerce Twilio SMS Notifications 1.12.3
+ * Last compatibility check: WooCommerce Twilio SMS Notifications 1.14.4
  *
  * @since 3.2.0
  */
@@ -235,6 +235,8 @@ class WC_Appointments_Integration_Twilio_SMS {
 		}
 
 		if ( $this->notification_has_schedule( $notification ) ) {
+
+			$schedule = $suffix = '';
 
 			switch ( $notification ) {
 
@@ -605,9 +607,22 @@ class WC_Appointments_Integration_Twilio_SMS {
 
 			if ( ! empty( $schedule ) ) {
 
+				try {
+
+					$timezone = new \DateTimeZone( wc_timezone_string() );
+
+					$start_date = ( new \DateTime( date( 'Y-m-d H:i:s', $appointment->get_start() ), $timezone ) )->getTimestamp();
+					$end_date   = ( new \DateTime( date( 'Y-m-d H:i:s', $appointment->get_end() ), $timezone ) )->getTimestamp();
+
+				} catch ( \Exception $e ) {
+
+					$start_date = $appointment->get_start() - wc_timezone_offset();
+					$end_date   = $appointment->get_end() - wc_timezone_offset();
+				}
+
 				// determine when to send this notification and schedule action
 				$notification_schedule  = new WC_Appointments_Integration_Notification_Schedule( $schedule );
-				$notification_timestamp = $after_event ? $notification_schedule->get_time_after( $appointment->get_end() ) : $notification_schedule->get_time_before( $appointment->get_start() );
+				$notification_timestamp = $after_event ? $notification_schedule->get_time_after( $end_date ) : $notification_schedule->get_time_before( $start_date );
 
 				if ( ! as_next_scheduled_action( "wc_twilio_sms_appointments_{$notification}_notification", $hook_args ) ) {
 
@@ -711,10 +726,13 @@ class WC_Appointments_Integration_Twilio_SMS {
 		#error_log( var_export( $appointment_id, true ) );
 		#error_log( var_export( $notification, true ) );
 
-		$appointment = get_wc_appointment( $appointment_id );
-		$template    = $this->get_template( $notification, $appointment->get_product() );
+		if ( $appointment = get_wc_appointment( $appointment_id ) ) {
 
-		if ( $appointment && $template ) {
+			$template = $this->get_template( $notification, $appointment->get_product() );
+
+			if ( ! $template ) {
+				return;
+			}
 
 			$message = $this->build_sms_message( $template, $appointment );
 
@@ -731,12 +749,13 @@ class WC_Appointments_Integration_Twilio_SMS {
 				}
 			} else {
 
-				$phone_number = $appointment->get_order()->get_billing_phone();
-				$country_code = $this->get_customer_country_code( $appointment );
+				$appointment_order = $appointment->get_order();
+				$phone_number      = $appointment_order ? $appointment_order->get_billing_phone() : '';
+				$country_code      = $this->get_customer_country_code( $appointment );
 
-				#error_log( var_export( $phone_number, true ) );
-
-				$this->send_sms_message( $phone_number, $message, $country_code );
+				if ( '' !== $phone_number ) {
+					$this->send_sms_message( $phone_number, $message, $country_code );
+				}
 			}
 		}
 	}
@@ -770,8 +789,8 @@ class WC_Appointments_Integration_Twilio_SMS {
 
 		$billing_name = $order ? $order->get_formatted_billing_full_name() : '';
 
-		$date_format = wc_date_format();
-		$time_format = wc_time_format();
+		$date_format = wc_appointments_date_format();
+		$time_format = wc_appointments_time_format();
 
 		$token_map = array(
 			'{shop_name}'              => get_bloginfo( 'name' ),
@@ -789,7 +808,7 @@ class WC_Appointments_Integration_Twilio_SMS {
 		 *
 		 * @param bool $token_map
 		 */
-		$token_map = (array) apply_filters( 'wc_twilio_sms_appointments_token_map', $token_map );
+		$token_map = (array) apply_filters( 'wc_twilio_sms_appointments_token_map', $token_map, $appointment );
 
 		foreach ( $token_map as $key => $value ) {
 
@@ -813,6 +832,10 @@ class WC_Appointments_Integration_Twilio_SMS {
 		// sanitize input
 		$mobile_number = trim( $mobile_number );
 		$message       = sanitize_text_field( $message );
+
+		#error_log( var_export( $mobile_number, true ) );
+		#error_log( var_export( $message, true ) );
+		#error_log( var_export( $country_code, true ) );
 
 		try {
 

@@ -47,7 +47,7 @@ defined( 'ABSPATH' ) || exit;
 						for ( $i = $start_of_week; $i < $start_of_week + 7; $i ++ ) {
 							$day_time   = strtotime( "next sunday +{$i} day" );
 							$day_number = date_i18n( _x( 'w', 'date format', 'woocommerce-appointments' ), $day_time ); #day of week number (zero to six)
-							$day_name   = date_i18n( _x( 'l', 'date format', 'woocommerce-appointments' ), $day_time ); #day of week name (Mon to Sun)
+							$day_name   = date_i18n( _x( 'D', 'date format', 'woocommerce-appointments' ), $day_time ); #day of week name (Mon to Sun)
 							?>
 							<td>
 								<label class="checkbox" for="_wc_appointment_restricted_days[<?php echo esc_html( $day_number ); ?>]"><?php echo esc_html( $day_name ); ?>&nbsp;</label>

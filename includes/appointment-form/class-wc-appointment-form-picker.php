@@ -64,9 +64,10 @@ abstract class WC_Appointment_Form_Picker {
 			$js_string = "+{$max_date['value']}{$unit}";
 		} elseif ( 'h' === $unit ) {
 			$current_d = date( 'd', current_time( 'timestamp' ) );
-			$max_d     = date( 'd', strtotime( "+{$max_date['value']}{$unit}", current_time( 'timestamp' ) ) );
-			$js_string = '+' . ( $current_d == $max_d ? 0 : 1 ) . "d";
+			$max_d     = date( 'd', strtotime( "+{$max_date['value']}{$max_date['unit']}", current_time( 'timestamp' ) ) );
+			$js_string = '+' . ( $current_d == $max_d ? 0 : absint( $max_d - $current_d ) ) . "d";
 		}
+
 		return $js_string;
 	}
 

@@ -36,6 +36,7 @@ class WC_Email_Admin_Appointment_Cancelled extends WC_Email {
 		add_action( 'woocommerce_appointment_pending-confirmation_to_cancelled_notification', array( $this, 'trigger' ) );
 		add_action( 'woocommerce_appointment_confirmed_to_cancelled_notification', array( $this, 'trigger' ) );
 		add_action( 'woocommerce_appointment_paid_to_cancelled_notification', array( $this, 'trigger' ) );
+		add_action( 'woocommerce_appointment_unpaid_to_cancelled_notification', array( $this, 'trigger' ) );
 
 		// Call parent constructor
 		parent::__construct();
@@ -113,6 +114,10 @@ class WC_Email_Admin_Appointment_Cancelled extends WC_Email {
 			// Check if provided $appointment_id is indeed an $appointment.
 			$this->object = wc_appointments_maybe_appointment_object( $appointment );
 
+			if ( ! $this->object ) {
+				return;
+			}
+
 			$this->placeholders['{appointment_number}'] = $appointment_id;
 			$this->placeholders['{appointment_start}']  = $this->object->get_start_date();
 			$this->placeholders['{appointment_end}']    = $this->object->get_end_date();
@@ -130,7 +135,7 @@ class WC_Email_Admin_Appointment_Cancelled extends WC_Email {
 				$this->placeholders['{order_date}']   = wc_format_datetime( $order_date );
 				$this->placeholders['{order_number}'] = $this->object->get_order()->get_order_number();
 			} else {
-				$this->placeholders['{order_date}']   = date_i18n( wc_date_format(), strtotime( $this->object->appointment_date ) );
+				$this->placeholders['{order_date}']   = date_i18n( wc_appointments_date_format(), strtotime( $this->object->appointment_date ) );
 				$this->placeholders['{order_number}'] = __( 'N/A', 'woocommerce-appointments' );
 			}
 

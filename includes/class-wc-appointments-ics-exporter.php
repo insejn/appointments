@@ -64,7 +64,7 @@ class WC_Appointments_ICS_Exporter {
 	public function get_ics( $appointments, $filename = '' ) {
 		// Create a generic filename.
 		if ( '' == $filename ) {
-			$filename = 'appointments-' . date_i18n( wc_date_format() . '-' . wc_time_format(), current_time( 'timestamp' ) );
+			$filename = 'appointments-' . date_i18n( 'Ymd-His', current_time( 'timestamp' ) );
 		}
 
 		$this->file_path    = $this->get_file_path( $filename );
@@ -114,8 +114,9 @@ class WC_Appointments_ICS_Exporter {
 	 * @return string Formatted date for ICS.
 	 */
 	protected function format_date( $timestamp, $appointment = null ) {
-		//$pattern = 'Ymd\THis\Z';
+		#$pattern = 'Ymd\THis\Z';
 		$pattern = 'Ymd\THis';
+		$old_ts  = $timestamp;
 
 		if ( $appointment ) {
 			$pattern = ( $appointment->is_all_day() ) ? 'Ymd' : $pattern;
@@ -129,7 +130,7 @@ class WC_Appointments_ICS_Exporter {
 			}
 		}
 
-		return date( $pattern, $timestamp );
+		return apply_filters( 'woocommerce_appointments_ics_format_date', date( $pattern, $timestamp ), $timestamp, $old_ts, $appointment );
 	}
 
 	/**
@@ -161,7 +162,7 @@ class WC_Appointments_ICS_Exporter {
 		$ics .= 'PRODID:-//BookingWP//WooCommerce Appointments ' . WC_APPOINTMENTS_VERSION . '//EN' . $this->eol;
 		$ics .= 'CALSCALE:GREGORIAN' . $this->eol;
 		$ics .= 'X-WR-CALNAME:' . $this->sanitize_string( $sitename ) . $this->eol;
-		$ics .= 'X-ORIGINAL-URL:' . $this->sanitize_string( home_url( '/' ) ) . $this->eol;
+		$ics .= 'X-ORIGINAL-URL:' . $this->sanitize_string( get_site_url( get_current_blog_id(), '/' ) ) . $this->eol;
 		/* translators: %s: site name */
 		$ics .= 'X-WR-CALDESC:' . $this->sanitize_string( sprintf( __( 'Appointments from %s', 'woocommerce-appointments' ), $sitename ) ) . $this->eol;
 		$ics .= 'X-WR-TIMEZONE:' . wc_appointment_get_timezone_string() . $this->eol;
@@ -171,7 +172,7 @@ class WC_Appointments_ICS_Exporter {
 			$ics_appointment = $this->ics_appointment( $appointment );
 			// Loop through ics data.
 			foreach ( $ics_appointment as $ics_data ) {
-				// error_log( var_export( $ics_data, true ) );
+				#error_log( var_export( $ics_data, true ) );
 				$ics .= $ics_data . $this->eol;
 			}
 		}
@@ -191,16 +192,16 @@ class WC_Appointments_ICS_Exporter {
 		$siteadmin = get_option( 'admin_email' );
 
 		// Set the ics data.
-		$ics_a = array();
+		$ics_a          = array();
 		$appointment_id = $appointment->get_id();
 		$product        = $appointment->get_product();
 		$product_title  = $product ? ' - ' . $product->get_title() : '';
 		$url            = $appointment->get_order() ? $appointment->get_order()->get_view_order_url() : '';
 		$summary        = '#' . $appointment->get_id() . $product_title;
 		$description    = '';
-		//$date_prefix    = $appointment->is_all_day() ? ';VALUE=DATE:' : ';TZID=/' . wc_appointment_get_timezone_string() . ':';
 		$date_prefix    = $appointment->is_all_day() ? ';VALUE=DATE:' : ':';
 		$staff_names    = $appointment->get_staff_members( true );
+		#$date_prefix    = $appointment->is_all_day() ? ';VALUE=DATE:' : ';TZID=/' . wc_appointment_get_timezone_string() . ':';
 
 		if ( $staff_names ) {
 			$description .= __( 'Staff', 'woocommerce-appointments' ) . ': ' . $staff_names . '\n\n';
@@ -214,16 +215,16 @@ class WC_Appointments_ICS_Exporter {
 		}
 
 		$ics_a['begin_vevent'] = 'BEGIN:VEVENT';
-		$ics_a['dtstart'] = 'DTSTART' . $date_prefix . $this->format_date( $appointment->get_start(), $appointment );
-		$ics_a['dtend'] = 'DTEND' . $date_prefix . $this->format_date( $appointment->get_end(), $appointment );
-		$ics_a['uid'] = 'UID:' . $this->uid_prefix . $appointment->get_id();
-		$ics_a['dtstamp'] = 'DTSTAMP:' . $this->format_date( current_time( 'timestamp' ) );
-		$ics_a['location'] = 'LOCATION:';
-		$ics_a['description'] = 'DESCRIPTION:' . $this->sanitize_string( $description );
-		$ics_a['url'] = 'URL;VALUE=URI:' . $this->sanitize_string( $url );
-		$ics_a['summary'] = 'SUMMARY:' . $this->sanitize_string( $summary );
-		$ics_a['organizer'] = 'ORGANIZER;CN="' . $this->sanitize_string( $sitename ) . '":' . $this->sanitize_string( $siteadmin );
-		$ics_a['end_vevent'] = 'END:VEVENT';
+		$ics_a['dtstart']      = 'DTSTART' . $date_prefix . $this->format_date( $appointment->get_start(), $appointment );
+		$ics_a['dtend']        = 'DTEND' . $date_prefix . $this->format_date( $appointment->get_end(), $appointment );
+		$ics_a['uid']          = 'UID:' . $this->uid_prefix . $appointment->get_id();
+		$ics_a['dtstamp']      = 'DTSTAMP:' . $this->format_date( current_time( 'timestamp' ) );
+		$ics_a['location']     = 'LOCATION:';
+		$ics_a['description']  = 'DESCRIPTION:' . $this->sanitize_string( $description );
+		$ics_a['url']          = 'URL;VALUE=URI:' . $this->sanitize_string( $url );
+		$ics_a['summary']      = 'SUMMARY:' . $this->sanitize_string( $summary );
+		$ics_a['organizer']    = 'ORGANIZER;CN="' . $this->sanitize_string( $sitename ) . '":' . $this->sanitize_string( $siteadmin );
+		$ics_a['end_vevent']   = 'END:VEVENT';
 
 		return apply_filters( 'wc_appointments_ics_appointment', $ics_a, $appointment, $this );
 	}

@@ -222,7 +222,7 @@ jQuery( function( $ ) {
 							is_custom_price = true;
 							addon_cost      = $addon.val();
 							addon_cost_raw  = $addon.val();
-							price_type      = 'flat_fee';
+							price_type      = 'quantity_based';
 						} else if ( $addon.is( '.wc-pao-addon-input-multiplier' ) ) {
 							if ( isNaN( $addon.val() ) || '' === $addon.val() ) { // Number inputs return blank when invalid
 								$addon.val( '' );
@@ -481,7 +481,8 @@ jQuery( function( $ ) {
 							if ( $( '.wc-bookings-booking-form' ).length ) {
 								var html = '<div class="product-addon-totals"><ul><li><div class="wc-pao-col1"><strong>' + productName + '</strong></div><div class="wc-pao-col2"><strong><span class="amount">' + productPrice + '</span></strong></div></li>';
 							} else {
-								var html = '<div class="product-addon-totals"><ul><li><div class="wc-pao-col1"><strong>' + qty + woocommerce_addons_params.quantity_symbol + productName + '</strong></div><div class="wc-pao-col2"><strong><span class="amount">' + productPrice + '</span></strong></div></li>';
+								var quantityString = is_rtl() ? woocommerce_addons_params.quantity_symbol + qty : qty + woocommerce_addons_params.quantity_symbol;
+								var html = '<div class="product-addon-totals"><ul><li><div class="wc-pao-col1"><strong><span>' + quantityString + '</span> ' + productName + '</strong></div><div class="wc-pao-col2"><strong><span class="amount">' + productPrice + '</span></strong></div></li>';
 							}
 
 							if ( addons.length ) {
@@ -615,6 +616,10 @@ jQuery( function( $ ) {
 				image_swatches.tipTip( { delay: 200 } );
 			}
 		},
+	};
+
+	var is_rtl = function() {
+		return 'rtl' === document.documentElement.dir;
 	};
 
 	// Quick view.

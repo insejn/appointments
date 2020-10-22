@@ -258,7 +258,8 @@ jQuery( document ).ready( function( $ ) {
 				appointable = wc_appointments_date_picker.is_staff_available_on_date( staff_args );
 
 				// In case all staff is assigned together.
-				if ( 'all' === args.staff_assignment && args.has_staff ) {
+				// and more than one staff is assigned.
+				if ( 'all' === args.staff_assignment && args.has_staff && 1 < args.has_staff ) {
 					var all_staff_args = $.extend(
 						{
 							availability: args.availability,

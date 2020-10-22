@@ -82,6 +82,17 @@ class WC_Appointments_Admin_List_Table extends WC_Admin_List_Table {
 	}
 
 	/**
+	 * Define hidden columns.
+	 *
+	 * @return array
+	 */
+	protected function define_hidden_columns() {
+		return array(
+			'addons',
+		);
+	}
+
+	/**
 	 * Define which columns are sortable.
 	 *
 	 * @param array $columns Existing columns.
@@ -110,11 +121,12 @@ class WC_Appointments_Admin_List_Table extends WC_Admin_List_Table {
 
 		$show_columns                        = array();
 		$show_columns['cb']                  = '<input type="checkbox" />';
-		$show_columns["appointment_id"]      = __( 'Appointment', 'woocommerce-appointments' );
-		$show_columns["appointment_when"]    = __( 'When', 'woocommerce-appointments' );
-		$show_columns["scheduled_product"]   = __( 'Product', 'woocommerce-appointments' );
-		$show_columns["scheduled_staff"]     = __( 'Staff', 'woocommerce-appointments' );
-		$show_columns["appointment_actions"] = __( 'Actions', 'woocommerce-appointments' );
+		$show_columns['appointment_id']      = __( 'Appointment', 'woocommerce-appointments' );
+		$show_columns['appointment_when']    = __( 'When', 'woocommerce-appointments' );
+		$show_columns['scheduled_product']   = __( 'Product', 'woocommerce-appointments' );
+		$show_columns['addons']              = __( 'Add-ons', 'woocommerce-appointments' );
+		$show_columns['scheduled_staff']     = __( 'Staff', 'woocommerce-appointments' );
+		$show_columns['appointment_actions'] = __( 'Actions', 'woocommerce-appointments' );
 
 		return array_merge( $show_columns, $columns );
 	}
@@ -128,10 +140,10 @@ class WC_Appointments_Admin_List_Table extends WC_Admin_List_Table {
 		global $the_appointment;
 
 		if ( empty( $this->object ) || $this->object->get_id() !== $post_id ) {
-			$the_appointment        = get_wc_appointment( $post_id );
-			$this->object           = $the_appointment;
-			$this->object->order    = $the_appointment->get_order();
-			$this->object->product  = $the_appointment->get_product();
+			$the_appointment       = get_wc_appointment( $post_id );
+			$this->object          = $the_appointment;
+			$this->object->order   = $the_appointment->get_order();
+			$this->object->product = $the_appointment->get_product();
 		}
 	}
 
@@ -146,8 +158,8 @@ class WC_Appointments_Admin_List_Table extends WC_Admin_List_Table {
 		 * Filter buyer name in list table appointments.
 		 *
 		 * @since 4.7.6
-		 * @param string   $buyer Buyer name.
-		 * @param WC_Order $order Order data.
+		 * @param string         $buyer       Buyer name.
+		 * @param WC_Appointment $appointment Appointment data.
 		 */
 		$buyer = apply_filters( 'woocommerce_appointments_admin_buyer_name', $buyer, $this->object );
 
@@ -160,8 +172,8 @@ class WC_Appointments_Admin_List_Table extends WC_Admin_List_Table {
 		);
 		// Order.
 		if ( $this->object->order ) {
-			/* translators: %1$s: Order link, %2$d: Order ID, %3$s: Order status */
 			printf(
+				/* translators: %1$s: Order link, %2$d: Order ID, %3$s: Order status */
 				'<br /><a href="%1$s">' . esc_html__( 'Order #%2$d', 'woocommerce-appointments' ) . '</a> - %3$s',
 				esc_url( admin_url( 'post.php?post=' . $this->object->order->get_id() . '&action=edit' ) ),
 				esc_attr( $this->object->order->get_order_number() ),
@@ -187,7 +199,19 @@ class WC_Appointments_Admin_List_Table extends WC_Admin_List_Table {
 		if ( $this->object->product ) {
 			$saved_qty   = $this->object->get_qty();
 			$product_qty = $saved_qty ? esc_attr( $saved_qty ) : 1;
-			echo '<a href="' . esc_url( admin_url( 'post.php?post=' . esc_attr( $this->object->product->get_id() ) . '&action=edit' ) ) . '">' . esc_attr( $this->object->product->get_title() ) . '</a>' . ' <div class="view"><small class="times">×</small> ' . esc_attr( $product_qty ) . '</div>';
+			echo '<a href="' . esc_url( admin_url( 'post.php?post=' . esc_attr( $this->object->product->get_id() ) . '&action=edit' ) ) . '">' . esc_attr( $this->object->product->get_title() ) . '</a> <div class="view"><small class="times">×</small> ' . esc_attr( $product_qty ) . '</div>';
+		} else {
+			echo '–';
+		}
+	}
+
+	/**
+	 * Render columm: addons.
+	 */
+	protected function render_addons_column() {
+		$addons = $this->object->get_addons();
+		if ( $addons ) {
+			echo $addons;
 		} else {
 			echo '–';
 		}
@@ -324,7 +348,7 @@ class WC_Appointments_Admin_List_Table extends WC_Admin_List_Table {
 
 		if ( ! empty( $_REQUEST['filter_product'] ) ) { // phpcs:disable  WordPress.Security.NonceVerification.NoNonceVerification
 			$product_id   = absint( $_REQUEST['filter_product'] ); // WPCS: input var ok, sanitization ok.
-			$product      = get_wc_product_appointment( $product_id );;
+			$product      = get_wc_product_appointment( $product_id );
 			$product_name = $product ? $product->get_title() : '';
 		}
 		?>
@@ -447,72 +471,19 @@ class WC_Appointments_Admin_List_Table extends WC_Admin_List_Table {
 			return $wp;
 		}
 
-		$term = wc_clean( $_GET['s'] );
+		$appointment_ids = array();
+		$term        = wc_clean( $_GET['s'] );
 
 		if ( is_numeric( $term ) ) {
-			$appointment_ids = array( $term );
-		} elseif ( function_exists( 'wc_order_search' ) ) {
-			$order_ids       = wc_order_search( wc_clean( $_GET['s'] ) );
-			$appointment_ids = $order_ids ? WC_Appointment_Data_Store::get_appointment_ids_from_order_id( $order_ids ) : array( 0 );
-		} else {
-			// @deprecated
-			$search_fields = array_map(
-				'wc_clean',
-				array(
-					'_billing_first_name',
-					'_billing_last_name',
-					'_billing_company',
-					'_billing_address_1',
-					'_billing_address_2',
-					'_billing_city',
-					'_billing_postcode',
-					'_billing_country',
-					'_billing_state',
-					'_billing_email',
-					'_billing_phone',
-					'_shipping_first_name',
-					'_shipping_last_name',
-					'_shipping_address_1',
-					'_shipping_address_2',
-					'_shipping_city',
-					'_shipping_postcode',
-					'_shipping_country',
-					'_shipping_state',
-				)
-			);
-
-			// Search orders
-			$order_ids = $wpdb->get_col(
-				$wpdb->prepare(
-					"SELECT post_id
-						FROM {$wpdb->postmeta}
-						WHERE meta_key IN ('" . implode( "','", $search_fields ) . "')
-						AND meta_value LIKE '%%%s%%'",
-					esc_attr( $_GET['s'] )
-				)
-			);
-			// ensure db query doesn't throw an error due to empty post_parent value
-			$order_ids = empty( $order_ids ) ? array( '-1' ) : $order_ids;
-
-			// so we know we're doing this
-			$appointment_ids = array_merge(
-				$wpdb->get_col(
-					"SELECT ID FROM {$wpdb->posts}
-						WHERE post_parent IN (" . implode( ',', $order_ids ) . ");"
-				),
-				$wpdb->get_col(
-					$wpdb->prepare(
-						"SELECT ID
-							FROM {$wpdb->posts}
-							WHERE post_title LIKE '%%%s%%'
-							OR ID = %d;",
-						esc_attr( $_GET['s'] ),
-						absint( $_GET['s'] )
-					)
-				),
-				array( 0 ) // so we don't get back all results for incorrect search
-			);
+			$appointment_ids[] = $term;
 		}
+
+		$order_ids   = wc_order_search( wc_clean( $_GET['s'] ) );
+		$appointment_ids = array_merge(
+			$appointment_ids,
+			$order_ids ? WC_Appointment_Data_Store::get_appointment_ids_from_order_id( $order_ids ) : array( 0 ),
+			wc_appointment_search( wc_clean( $_GET['s'] ) )
+		);
 
 		$wp->query_vars['s']                  = false;
 		$wp->query_vars['post__in']           = $appointment_ids;
@@ -680,8 +651,7 @@ class WC_Appointments_Admin_List_Table extends WC_Admin_List_Table {
 			return;
 		}
 
-		if (
-			   isset( $_REQUEST['appointments_confirmed'] )
+		if ( isset( $_REQUEST['appointments_confirmed'] )
 			|| isset( $_REQUEST['appointments_marked_paid'] )
 			|| isset( $_REQUEST['appointments_marked_unpaid'] )
 			|| isset( $_REQUEST['appointments_unconfirmed'] )

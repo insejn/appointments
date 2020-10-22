@@ -11,7 +11,7 @@
  * the readme will list any important changes.
  *
  * @see         https://docs.woocommerce.com/document/template-structure/
- * @version     3.4.0
+ * @version     4.10.0
  * @since       1.0.0
  */
 
@@ -49,6 +49,8 @@ do_action( 'woocommerce_before_add_to_cart_form' ); ?>
 	<?php
 	// Show quantity only when maximum qty is larger than 1 ... duuuuuuh
 	if ( $product->get_qty() > 1 && $product->get_qty_max() > 1 ) {
+		do_action( 'woocommerce_before_add_to_cart_quantity' );
+
 		woocommerce_quantity_input(
 			array(
 				'min_value'   => apply_filters( 'woocommerce_quantity_input_min', $product->get_qty_min(), $product ),
@@ -56,6 +58,8 @@ do_action( 'woocommerce_before_add_to_cart_form' ); ?>
 				'input_value' => ( isset( $_POST['quantity'] ) ? wc_stock_amount( $_POST['quantity'] ) : 1 ),
 			)
 		);
+
+		do_action( 'woocommerce_after_add_to_cart_quantity' );
 	}
 	?>
 

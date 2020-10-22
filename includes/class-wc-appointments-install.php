@@ -28,10 +28,11 @@ class WC_Appointments_Install {
 	 * @since 4.3.4
 	 */
 	private static function run() {
-		$installed_version = get_option( 'wc_appointments_version' );
+		$saved_version     = get_option( 'wc_appointments_version' );
+		$installed_version = ! $saved_version ? WC_APPOINTMENTS_VERSION : $saved_version;
 
 		// Check the version before running.
-		if ( ! defined( 'IFRAME_REQUEST' ) && WC_APPOINTMENTS_VERSION !== $installed_version ) {
+		if ( ! defined( 'IFRAME_REQUEST' ) && WC_APPOINTMENTS_VERSION !== $saved_version ) {
 			if ( ! defined( 'WC_APPOINTMENTS_INSTALLING' ) ) {
 				define( 'WC_APPOINTMENTS_INSTALLING', true );
 			}
@@ -576,6 +577,8 @@ class WC_Appointments_Install {
 			define( 'EMPTY_TRASH_DAYS', 30 );
 		}
 
-		as_unschedule_all_actions( 'wc-appointment-sync-from-gcal' );
+		if ( function_exists( 'as_unschedule_all_actions' ) ) {
+			as_unschedule_all_actions( 'wc-appointment-sync-from-gcal' );
+		}
 	}
 }

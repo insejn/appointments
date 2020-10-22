@@ -165,7 +165,6 @@ class WC_Appointments_REST_Appointments_Controller extends WC_Appointments_REST_
 		}
 
 		// TODO: Update other fields here.
-
 		// Allow set meta_data.
 		if ( is_array( $request['meta_data'] ) ) {
 			foreach ( $request['meta_data'] as $meta ) {

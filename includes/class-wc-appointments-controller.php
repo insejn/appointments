@@ -297,8 +297,7 @@ class WC_Appointments_Controller {
 					$appointment_type_all = isset( $available_slots_a[0] ) && in_array( $date_format, $available_slots_a[0] ) ? 'partially_scheduled_days' : 'fully_scheduled_days';
 					#print '<pre>'; print_r( $date_format ); print '</pre>';
 					#print '<pre>'; print_r( $existing_staff_id ); print '</pre>';
-					#print '<pre>'; print_r( $appointment_type ); print '</pre>';
-					#print '<pre>'; print_r( $available_slots_a ); print '</pre>';
+					#print '<pre>'; print_r( $date_format ); print '</pre>';
 					$scheduled_day_slots[ $appointment_type_all ][ $date_format ][0]                = 1;
 					$scheduled_day_slots[ $appointment_type ][ $date_format ][ $existing_staff_id ] = 1;
 					// Remainging scheduled, when staff is selected.

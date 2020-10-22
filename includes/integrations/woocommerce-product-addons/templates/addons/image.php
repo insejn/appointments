@@ -66,7 +66,7 @@ if ( empty( $required ) ) { ?>
 	$image_src = wp_get_attachment_image_src( $option['image'], apply_filters( 'woocommerce_product_addons_image_swatch_size', 'thumbnail', $option ) );
 	?>
 		<a href="#" title="<?php echo esc_attr( $option['label'] . $price_tip . $duration_tip ); ?>" class="wc-pao-addon-image-swatch" data-value="<?php echo sanitize_title( $option['label'] ) . '-' . $loop; ?>" data-price="<?php echo esc_attr( '<span class="wc-pao-addon-image-swatch-price">' . wptexturize( $option['label'] ) . ' ' . $price_display . $duration_display . '</span>' ); ?>">
-			<img src="<?php echo esc_url( $image_src[0] ? $image_src[0] : wc_placeholder_img_src() ); ?>" />
+			<img src="<?php echo esc_url( $image_src && isset( $image_src[0] ) ? $image_src[0] : wc_placeholder_img_src() ); ?>" />
 		</a>
 <?php } ?>
 

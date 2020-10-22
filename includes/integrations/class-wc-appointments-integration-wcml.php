@@ -682,18 +682,22 @@ class WC_Appointments_Integration_WCML {
 			if ( isset( $_POST['form'] ) ) {
 				parse_str( $_POST['form'], $posted );
 
-				$appointment_id = $posted['add-to-cart'];
+				$product_id = $posted['add-to-cart'];
 
 			} elseif ( isset( $_POST['add-to-cart'] ) ) {
 
-				$appointment_id = $_POST['add-to-cart'];
+				$product_id = $_POST['add-to-cart'];
+
+			} elseif ( isset( $_POST['appointable-product-id'] ) ) {
+
+				$product_id = $_POST['appointable-product-id'];
 
 			}
 
-			if ( isset( $appointment_id ) ) {
-				$original_id = $this->woocommerce_wpml->products->get_original_product_id( $appointment_id );
+			if ( isset( $product_id ) ) {
+				$original_id = $this->woocommerce_wpml->products->get_original_product_id( $product_id );
 
-				if ( $appointment_id != $original_id ) {
+				if ( $product_id != $original_id ) {
 					$fields = maybe_unserialize( get_post_meta( $original_id, '_wc_appointment_pricing', true ) );
 					$fields = $fields[ $key ];
 				}

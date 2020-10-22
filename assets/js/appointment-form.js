@@ -2,11 +2,14 @@
 jQuery( document ).ready( function( $ ) {
 	'use strict';
 
-	var xhr = [];
+	var xhr        = [];
+	var form_count = 1;
 	var wc_appointments_appointment_form = {
 		init: function() {
 			$( '.wc-appointments-appointment-form' ).show().removeAttr( 'disabled' );
 			$( '.wc-appointments-appointment-form-button' ).show().removeClass( 'disabled' ).prop( 'disabled', true );
+
+			form_count = $( '.wc-appointments-appointment-form' ).length;
 
 			// Run on each form instance.
 			$( '.wc-appointments-appointment-form' ).each( function() {
@@ -30,13 +33,15 @@ jQuery( document ).ready( function( $ ) {
 			if ( 'day' === duration_unit ) {
 				form.on( 'date-selected', this.calculate_costs )
 					.on( 'staff-selected', this.calculate_costs )
-					.on( 'addon-selected', this.calculate_costs );
+					.on( 'addon-duration-changed', this.calculate_costs )
+					.on( 'addon-costs-changed', this.calculate_costs );
 			// if duration unit is months then there is month picker present
 			// bind cost calculation on the month selection
 			} else if ( 'month' === duration_unit ) {
 				form.on( 'month-selected', this.calculate_costs )
 					.on( 'staff-selected', this.calculate_costs )
-					.on( 'addon-selected', this.calculate_costs );
+					.on( 'addon-duration-changed', this.calculate_costs )
+					.on( 'addon-costs-changed', this.calculate_costs );
 			// if duration unit is hours or minutes then there is time picker present
 			// bind cost calculation on the staff and time selection
 			} else {
@@ -47,11 +52,15 @@ jQuery( document ).ready( function( $ ) {
 			form.find( '.quantity' ).on( 'change', 'input, select', this.calculate_costs );
 
 			// Update querystring.
-			form.on( 'month-selected', this.update_querystring )
-				.on( 'date-selected', this.update_querystring )
-				.on( 'time-selected', this.update_querystring )
-				.on( 'staff-selected', this.update_querystring )
-				.on( 'addon-selected', this.update_querystring );
+			// Only when 1 form is present on page.
+			// console.log( form_count );
+			if ( 1 >= form_count ) {
+				form.on( 'month-selected', this.update_querystring )
+					.on( 'date-selected', this.update_querystring )
+					.on( 'time-selected', this.update_querystring )
+					.on( 'staff-selected', this.update_querystring )
+					.on( 'addon-selected', this.update_querystring );
+			}
 
 			// Add-ons changed.
 			form.on( 'updated_addons', this.selected_addon );
@@ -73,6 +82,10 @@ jQuery( document ).ready( function( $ ) {
 			if ( 'preset' !== type ) {
 				form = $( this ).closest( 'form' );
 			}
+
+			// Make sure the check the button state
+			// to prevent enabling the button when it should be disabled.
+			var check_add_to_cart_button_state = form.find( '.single_add_to_cart_button' ).is( ':disabled' );
 
 			form.find( '.single_add_to_cart_button' ).prop( 'disabled', true );
 
@@ -204,10 +217,12 @@ jQuery( document ).ready( function( $ ) {
 				form.triggerHandler( 'addon-costs-only-changed', [ addons_costs ] );
 			} else if ( !addons_costs_only && addons_duration_only ) {
 				form.triggerHandler( 'addon-duration-only-changed', [ addons_duration ] );
+			} else if ( addons_costs_only && addons_duration_only ) {
+				form.triggerHandler( 'addon-duration-and-costs-changed', [ addons_duration ] );
 			}
 
 			// Enable book now button when addons have no cost or duration.
-			if ( !addons_costs_only && !addons_duration_only ) {
+			if ( !addons_costs_only && !addons_duration_only && !check_add_to_cart_button_state ) {
 				form.find( '.single_add_to_cart_button' ).prop( 'disabled', false );
 			}
 
@@ -266,7 +281,7 @@ jQuery( document ).ready( function( $ ) {
 						code = '{' + code.split( /\{(.+)?/ )[1];
 					}
 
-					var result = $.parseJSON( code );
+					var result = JSON.parse( code );
 
 					if ( 'ERROR' === result.result ) {
 						form.find( '.wc-appointments-appointment-cost' ).html( result.html );

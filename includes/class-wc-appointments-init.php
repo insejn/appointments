@@ -34,9 +34,9 @@ class WC_Appointments_Init {
 		#add_filter( 'woocommerce_appointments_get_start_date_with_time', array( $this, 'adjust_appointment_start_timezone' ), 15, 3 ); #lower priority
 		#add_filter( 'woocommerce_appointments_get_end_date_with_time',  array( $this, 'adjust_appointment_end_timezone' ), 15, 2 ); #lower priority
 
-		// Disable marketplace suggestions.
+		// Disable WooCommerce Bloat.
 		add_filter( 'woocommerce_allow_marketplace_suggestions', '__return_false' );
-		add_filter( 'woocommerce_marketing_menu_items', '__return_empty_array' );
+		add_filter( 'woocommerce_admin_onboarding_product_types', array( $this, 'onboarding_product_types' ) );
 	}
 
 	/**
@@ -70,7 +70,7 @@ class WC_Appointments_Init {
 					'public'              => false,
 					'show_ui'             => true,
 					'capability_type'     => 'appointment',
-					//'menu_icon'           => 'dashicons-backup',
+					#'menu_icon'           => 'dashicons-backup',
 					'menu_icon'           => 'dashicons-clock',
 					'map_meta_cap'        => true,
 					'publicly_queryable'  => false,
@@ -207,6 +207,16 @@ class WC_Appointments_Init {
 				    'screen_id' => 'edit-wc_appointment',
 				    'title'     => __( 'Appointments', 'woocommerce-appointments' ),
 					'path'      => add_query_arg( 'post_type', 'wc_appointment', $posttype_list_base ),
+				)
+		    );
+
+			// WooCommerce > Appointments > Export Appointments.
+		    wc_admin_connect_page(
+				array(
+					'id'        => 'woocommerce-export-appointments',
+					'parent'    => 'woocommerce-appointments',
+					'screen_id' => 'wc_appointment_page_appointment_exporter',
+					'title'     => __( 'Export Appointments', 'woocommerce-appointments' ),
 				)
 		    );
 
@@ -349,9 +359,9 @@ class WC_Appointments_Init {
 			$tzstring_site  = get_option( 'timezone_string' );
 			$tzstring       = get_user_meta( $user->ID, 'timezone_string', true );
 			$tzstring       = $tzstring ? $tzstring : $tzstring_site;
-			$date_format    = apply_filters( 'woocommerce_appointments_date_format', wc_date_format() );
-			$time_format    = apply_filters( 'woocommerce_appointments_time_format', ', ' . wc_time_format() );
-			$roles          = ( array ) $user->roles;
+			$date_format    = apply_filters( 'woocommerce_appointments_date_format', wc_appointments_date_format() );
+			$time_format    = apply_filters( 'woocommerce_appointments_time_format', ', ' . wc_appointments_time_format() );
+			$roles          = (array) $user->roles;
 
 			#print '<pre>'; print_r( $roles ); print '</pre>';
 
@@ -367,29 +377,26 @@ class WC_Appointments_Init {
 	}
 
 	/**
-	 * Adjust appointment time to staff/customer timezone.
+	 * Adjust products in the onbarding screen.
 	 *
-	 * @since 4.9.3
+	 * @since 4.10.1
 	 *
-	 * @param  string $timestring  Start or End timestamp.
-	 * @param  object $appointment WC_Appointment object.
+	 * @param  array $product_types  Product type in the onbarding screen.
 	 *
-	 * @return string Date/time string.
+	 * @return array $product_types.
 	 */
-	public function adjust_appointment_end_timezone( $timestring, $appointment ) {
-		$date_format = apply_filters( 'woocommerce_appointments_date_format', wc_date_format() );
-		$time_format = apply_filters( 'woocommerce_appointments_time_format', ', ' . wc_time_format() );
-
-		// Timezone caluclation.
-		if ( $appointment->get_timezone() && in_array( current_filter(), $customers_viewpoints ) ) {
-			$end_date = wc_appointment_timezone_locale( 'site', 'user', $appointment->get_end(), 'U', $appointment->get_timezone() );
-			$timestring = date_i18n( $date_format . $time_format, $end_date ) . ' (' . wc_appointment_get_timezone_name( $appointment->get_timezone() ) . ')';
-		} else {
-			$timestring = date_i18n( $date_format . $time_format, $appointment->get_end() );
+	public function onboarding_product_types( $product_types ) {
+		// Remove Bookings from the onboarding.
+		if ( isset( $product_types['bookings'] ) ) {
+			unset( $product_types['bookings'] );
 		}
 
+		// Remove Product Add-ons from the onboarding.
+		if ( isset( $product_types['product-add-ons'] ) ) {
+			unset( $product_types['product-add-ons'] );
+		}
 
-		return $timestring;
+		return $product_types;
 	}
 
 	/**
@@ -478,7 +485,7 @@ class WC_Appointments_Init {
 			'is_admin'                      => is_admin(),
 			'isRTL'                         => is_rtl(),
 			'server_timezone'               => wc_appointment_get_timezone_string(),
-			// 'server_time_format'            => wc_appointments_convert_to_moment_format( get_option( 'time_format' ) ),
+			// 'server_time_format'            => wc_appointments_convert_to_moment_format( wc_appointments_time_format() ),
 			// 'product_id'                    => $this->product->get_id(),
 		);
 
@@ -504,6 +511,31 @@ class WC_Appointments_Init {
 	protected function convert_to_moment_format( $format ) {
 		wc_deprecated_function( __METHOD__, '4.7.0', 'wc_appointments_convert_to_moment_format' );
 		return wc_appointments_convert_to_moment_format( $format );
+	}
+
+	/**
+	 * Adjust appointment time to staff/customer timezone.
+	 *
+	 * @since 4.9.3
+	 *
+	 * @param  string $timestring  Start or End timestamp.
+	 * @param  object $appointment WC_Appointment object.
+	 *
+	 * @return string Date/time string.
+	 */
+	public function adjust_appointment_end_timezone( $timestring, $appointment ) {
+		$date_format = apply_filters( 'woocommerce_appointments_date_format', wc_appointments_date_format() );
+		$time_format = apply_filters( 'woocommerce_appointments_time_format', ', ' . wc_appointments_time_format() );
+
+		// Timezone caluclation.
+		if ( $appointment->get_timezone() && in_array( current_filter(), $customers_viewpoints ) ) {
+			$end_date   = wc_appointment_timezone_locale( 'site', 'user', $appointment->get_end(), 'U', $appointment->get_timezone() );
+			$timestring = date_i18n( $date_format . $time_format, $end_date ) . ' (' . wc_appointment_get_timezone_name( $appointment->get_timezone() ) . ')';
+		} else {
+			$timestring = date_i18n( $date_format . $time_format, $appointment->get_end() );
+		}
+
+		return $timestring;
 	}
 
 }

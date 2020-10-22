@@ -47,6 +47,8 @@ class WC_Appointments_Admin_Save_Meta_Box {
 		$this->context    = 'side';
 		$this->priority   = 'high';
 		$this->post_types = array( 'wc_appointment' );
+
+		add_action( 'woocommerce_before_appointment_object_save', array( $this, 'track_appointment_changes' ), 10, 2 );
 	}
 
 	/**
@@ -92,6 +94,14 @@ class WC_Appointments_Admin_Save_Meta_Box {
 						pattern="\-?\d+(\.\d{0,})?"
 					/>
 				</div>
+				<div class="misc-pub-section misc-pub-note">
+					<label for="appointment_note"><?php esc_html_e( 'Track changes', 'woocommerce-appointments' ); ?>:</label>
+					<select name="appointment_note" id="appointment_note">
+						<option value="private"><?php esc_html_e( 'Private note', 'woocommerce-appointments' ); ?></option>
+						<option value="customer"><?php esc_html_e( 'Note to customer', 'woocommerce-appointments' ); ?></option>
+					</select>
+					<?php echo wc_help_tip( esc_html__( 'When appointment changes, add a private note or send a note to customer', 'woocommerce-appointments' ) ); ?>
+				</div>
 				<div class="clear"></div>
 			</div>
 			<div class="major-save-actions">
@@ -103,7 +113,7 @@ class WC_Appointments_Admin_Save_Meta_Box {
 						type="submit"
 						class="button save_order button-primary tips"
 						name="save"
-						value="<?php esc_html_e( 'Save Appointment', 'woocommerce-appointments' ); ?>"
+						value="<?php esc_html_e( 'Update', 'woocommerce-appointments' ); ?>"
 						data-tip="<?php echo wc_sanitize_tooltip( __( 'Save/update the appointment', 'woocommerce-appointments' ) ); ?>"
 					/>
 				</div>
@@ -111,6 +121,51 @@ class WC_Appointments_Admin_Save_Meta_Box {
 			</div>
 		</div>
 		<?php
+	}
+
+	public function track_appointment_changes( $appointment, $data_store ) {
+		// Don't procede if id is not of a valid appointment.
+		if ( ! is_a( $appointment, 'WC_Appointment' ) ) {
+			return;
+		}
+
+		// Get appointment changes.
+		$get_changes = $appointment->get_changes();
+
+		#error_log( var_export( $get_changes, true ) );
+
+		// Get order object.
+		$order = $appointment->get_order();
+
+		// Only add note when: start date, staff, quantity or product changes.
+		if ( $get_changes && $order && $appointment->is_edited_from_meta_box() ) {
+			if ( isset( $get_changes['start'] )
+			    || isset( $get_changes['staff_ids'] )
+				|| isset( $get_changes['qty'] )
+				|| isset( $get_changes['product_id'] )
+			) {
+				// Get note type.
+				$note_type = isset( $_POST['appointment_note'] ) && 'customer' === $_POST['appointment_note'] ? 'customer' : 'private';
+				// Appointment edited notice.
+				$notice = apply_filters(
+					'woocommerce_appointment_edited_notice',
+					sprintf(
+						/* translators: %1$d: appointment id, %2$s: old appointment time, %3$s: new appointment time */
+						__( 'Appointment #%1$d has been updated.', 'woocommerce-appointments' ),
+						$appointment->get_id()
+					),
+					$appointment
+				);
+
+				// Add a note to order privately..
+				if ( 'customer' === $note_type ) {
+					$order->add_order_note( $notice, true );
+				// Send the order note to customer.
+				} else {
+					$order->add_order_note( $notice );
+				}
+			}
+		}
 	}
 }
 

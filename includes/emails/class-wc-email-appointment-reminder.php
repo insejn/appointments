@@ -115,6 +115,10 @@ class WC_Email_Appointment_Reminder extends WC_Email {
 			// Check if provided $appointment_id is indeed an $appointment.
 			$this->object = wc_appointments_maybe_appointment_object( $appointment );
 
+			if ( ! $this->object ) {
+				return;
+			}
+
 			$this->placeholders['{appointment_number}'] = $appointment_id;
 			$this->placeholders['{appointment_start}']  = $this->object->get_start_date();
 			$this->placeholders['{appointment_end}']    = $this->object->get_end_date();
@@ -137,7 +141,7 @@ class WC_Email_Appointment_Reminder extends WC_Email {
 
 				$this->recipient = apply_filters( 'woocommerce_email_reminder_recipients', $billing_email, $this->object );
 			} else {
-				$this->placeholders['{order_date}']   = date_i18n( wc_date_format(), strtotime( $this->object->appointment_date ) );
+				$this->placeholders['{order_date}']   = date_i18n( wc_appointments_date_format(), strtotime( $this->object->appointment_date ) );
 				$this->placeholders['{order_number}'] = __( 'N/A', 'woocommerce-appointments' );
 
 				$customer_id = $this->object->customer_id;

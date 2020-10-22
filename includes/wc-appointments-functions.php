@@ -424,8 +424,8 @@ function wc_appointment_duration_in_minutes( $start, $end, $pretty = true ) {
  */
 function wc_appointment_format_timestamp( $timestamp, $is_all_day = false ) {
 	if ( $timestamp ) {
-		$date_format = apply_filters( 'woocommerce_appointments_date_format', wc_date_format() );
-		$time_format = apply_filters( 'woocommerce_appointments_time_format', ', ' . wc_time_format() );
+		$date_format = apply_filters( 'woocommerce_appointments_date_format', wc_appointments_date_format() );
+		$time_format = apply_filters( 'woocommerce_appointments_time_format', ', ' . wc_appointments_time_format() );
 		if ( $is_all_day ) {
 			return date_i18n( $date_format, $timestamp );
 		} else {
@@ -496,7 +496,7 @@ function wc_appointment_pretty_addon_duration( $time ) {
 /**
  * Convert duration in minutes to pretty time display
  *
- * @param  $time timestamp
+ * @param  $time duration in minutes
  *
  * @return string
  */
@@ -511,7 +511,7 @@ function wc_appointment_pretty_timestamp( $time ) {
 		$months_in_minuts = $months * 43200;
 		/* translators: %s: months */
 		$return = sprintf( _n( '%s month', '%s months', $months, 'woocommerce-appointments' ), $months );
-		$days   = floor(( $time - $months_in_minuts ) / 7200 );
+		$days   = floor( ( $time - $months_in_minuts ) / 7200 );
 		if ( $days > 0 ) {
 			$return .= '&nbsp;'; #empty space
 			/* translators: %s: days */
@@ -523,7 +523,7 @@ function wc_appointment_pretty_timestamp( $time ) {
 		$days_in_minuts = $days * 1440;
 		/* translators: %s: days */
 		$return = sprintf( _n( '%s day', '%s days', $days, 'woocommerce-appointments' ), $days );
-		$hours  = floor(( $time - $days_in_minuts ) / 60 );
+		$hours  = floor( ( $time - $days_in_minuts ) / 60 );
 		if ( $hours > 0 ) {
 			$return .= '&nbsp;'; #empty space
 			/* translators: %s: hours */
@@ -553,6 +553,82 @@ function wc_appointment_pretty_timestamp( $time ) {
 	}
 
 	return apply_filters( 'wc_appointment_pretty_timestamp', $return, $time );
+}
+
+/**
+ * Convert duration in minutes to array of duration parameters.
+ *
+ * @param  $time duration in minutes
+ *
+ * @since  4.9.8
+ *
+ * @return array array( 'duration', 'duration_unit' )
+ */
+function wc_appointment_duration_parameters( $time ) {
+	$minsPerMonth = apply_filters( 'woocommerce_appointments_month_duration_break', 60 * 24 * 30 ); #1 month
+	$minsPerDay   = apply_filters( 'woocommerce_appointments_day_duration_break', 60 * 24 ); #1 day
+	$minsPerHour  = apply_filters( 'woocommerce_appointments_hour_duration_break', 60 * 2 ); #2 hours
+
+	$return = array(
+		'duration'      => 1,
+		'duration_unit' => 'minute',
+	);
+
+	// Months.
+	if ( $time >= $minsPerMonth ) {
+		$months = floor( $time / 43200 );
+
+		$return['duration']      = intval( $months );
+		$return['duration_unit'] = 'month';
+
+		$months_in_minuts = $months * 43200;
+		$days             = floor( ( $time - $months_in_minuts ) / 7200 );
+		if ( $days > 0 ) {
+			$days = floor( $time / 1440 );
+
+			$return['duration']      = intval( $days );
+			$return['duration_unit'] = 'day';
+		}
+	// Days.
+	} elseif ( $time >= $minsPerDay ) {
+		$days = floor( $time / 1440 );
+
+		$return['duration']      = intval( $days );
+		$return['duration_unit'] = 'day';
+
+		$days_in_minuts = $days * 1440;
+		$hours          = floor( ( $time - $days_in_minuts ) / 60 );
+		if ( $hours > 0 ) {
+			$hours = floor( $time / 60 );
+
+			$return['duration']      = intval( $hours );
+			$return['duration_unit'] = 'hour';
+		}
+
+		$minutes = ( $time % 60 );
+		if ( $minutes > 0 ) {
+			$return['duration']      = intval( $minutes );
+			$return['duration_unit'] = 'minute';
+		}
+	// Hours.
+	} elseif ( $time >= $minsPerHour ) {
+		$hours = floor( $time / 60 );
+
+		$return['duration']      = intval( $hours );
+		$return['duration_unit'] = 'hour';
+
+		$minutes = ( $time % 60 );
+		if ( $minutes > 0 ) {
+			$return['duration']      = intval( $minutes );
+			$return['duration_unit'] = 'minute';
+		}
+	// Minutes.
+	} else {
+		$return['duration']      = intval( $time );
+		$return['duration_unit'] = 'minute';
+	}
+
+	return apply_filters( 'wc_appointment_duration_parameters', $return, $time );
 }
 
 /**
@@ -920,12 +996,12 @@ function wc_appointments_get_total_available_appointments_for_range( $appointabl
 
 		if ( in_array( $appointable_product->get_duration_unit(), array( 'minute', 'hour' ) ) ) {
 			if ( ! WC_Product_Appointment_Rule_Manager::check_availability_rules_against_time( $appointable_product, $start_date, $end_date, $staff_id ) ) {
-				return false;
+				return;
 			}
 		} else {
 			while ( $check_date < $end_date ) {
 				if ( ! WC_Product_Appointment_Rule_Manager::check_availability_rules_against_date( $appointable_product, $check_date, $staff_id ) ) {
-					return false;
+					return;
 				}
 				if ( $appointable_product->get_availability_span() ) {
 					break; // Only need to check first day
@@ -1011,16 +1087,20 @@ function wc_appointments_esc_rrule( $rrule, $is_all_day = false ) {
 
 	// Remove time from UNTIL.
 	if ( $is_all_day ) {
-		$rrule    = preg_replace_callback( '/UNTIL=([\dTZ]+)(?=;?)/', function( $matches ) {
-			//error_log( var_export( $matches, true ) );
-		    $dtUntil = new WC_DateTime( substr( $matches[1], 0, 8 ) );
+		$rrule = preg_replace_callback(
+			'/UNTIL=([\dTZ]+)(?=;?)/',
+			function( $matches ) {
+				#error_log( var_export( $matches, true ) );
+			    $dtUntil = new WC_DateTime( substr( $matches[1], 0, 8 ) );
 
-			return 'UNTIL=' . $dtUntil->format( 'Ymd' );
-		}, $rrule );
-		//error_log( var_export( $rrule, true ) );
-	}
+				return 'UNTIL=' . $dtUntil->format( 'Ymd' );
+			},
+			$rrule
+		);
+		#error_log( var_export( $rrule, true ) );
+
 	// Append time to UNTIL.
-	elseif ( $until_time_missing ) {
+	} elseif ( $until_time_missing ) {
 		$rrule = preg_replace( '/UNTIL=[^;]*/', '\0T000000Z', $rrule );
 		#error_log( var_export( $rrule, true ) );
 	}
@@ -1108,7 +1188,7 @@ function wc_appointments_get_posted_data( $posted = array(), $product = false, $
 		$data['_month'] = absint( $posted['wc_appointments_field_start_date_month'] );
 		$data['_day']   = absint( $posted['wc_appointments_field_start_date_day'] );
 		$data['_date']  = $data['_year'] . '-' . $data['_month'] . '-' . $data['_day'];
-		$data['date']   = date_i18n( wc_date_format(), strtotime( $data['_date'] ) );
+		$data['date']   = date_i18n( wc_appointments_date_format(), strtotime( $data['_date'] ) );
 	}
 
 	// Get year month field.
@@ -1124,7 +1204,7 @@ function wc_appointments_get_posted_data( $posted = array(), $product = false, $
 	// Get time field.
 	if ( ! empty( $posted['wc_appointments_field_start_date_time'] ) ) {
 		$data['_time'] = wc_clean( $posted['wc_appointments_field_start_date_time'] );
-		$data['time']  = date_i18n( wc_time_format(), strtotime( "{$data['_year']}-{$data['_month']}-{$data['_day']} {$data['_time']}" ) );
+		$data['time']  = date_i18n( wc_appointments_time_format(), strtotime( "{$data['_year']}-{$data['_month']}-{$data['_day']} {$data['_time']}" ) );
 	} else {
 		$data['_time'] = '';
 	}
@@ -1321,6 +1401,35 @@ function wc_appointments_paginated_availability( $availability, $page = false, $
 	);
 
 	return $paginated_appointment_slots;
+}
+
+/**
+ * Return WP's date format, defaulting to a non-empty one if it is unset.
+ *
+ * @return string
+ */
+function wc_appointments_date_format() {
+	return wc_date_format() ?: 'F j, Y';
+}
+
+/**
+ * Return WP's time format, defaulting to a non-empty one if it is unset.
+ *
+ * @return string
+ */
+function wc_appointments_time_format() {
+	return wc_time_format() ?: 'g:i a';
+}
+
+/**
+ * Search appointments.
+ *
+ * @param  string $term Term to search.
+ * @return array List of appointments ID.
+ */
+function wc_appointment_search( $term ) {
+	$data_store = WC_Data_Store::load( 'appointment' );
+	return $data_store->search_appointments( str_replace( 'Appointment #', '', wc_clean( $term ) ) );
 }
 
 /**

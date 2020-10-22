@@ -43,8 +43,6 @@ class WC_Appointment_Form_Date_Picker extends WC_Appointment_Form_Picker {
 	 * Attempts to find what date to default to in the date picker
 	 * by looking at the fist available slot. Otherwise, the current date is used.
 	 *
-	 * @param  array $fully_scheduled_slots
-	 * @param  array $padding_slots
 	 * @return int Timestamp
 	 */
 	public function get_default_date() {

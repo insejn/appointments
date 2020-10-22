@@ -11,7 +11,7 @@
  * the readme will list any important changes.
  *
  * @see         https://docs.woocommerce.com/document/template-structure/
- * @version     4.8.20
+ * @version     4.10.0
  * @since       3.4.0
  */
 
@@ -59,7 +59,7 @@ $appointment = $appointment ? $appointment : get_wc_appointment( 0 );
 <?php $wc_order = $appointment->get_order(); ?>
 <?php if ( $wc_order ) : ?>
 
-	<?php if ( 'pending' === $wc_order->get_status() ) : ?>
+	<?php if ( 'pending' === $wc_order->get_status() && 0 < $wc_order->get_total() ) : ?>
 		<p>
 		<?php
 		/* translators: %s: checkout payment url */
@@ -85,7 +85,7 @@ $appointment = $appointment ? $appointment : get_wc_appointment( 0 );
 	?>
 	(
 	<?php
-	printf( '<time datetime="%s">%s</time>', esc_attr( date_i18n( 'c', strtotime( $order_date ) ) ), esc_attr( date_i18n( wc_date_format(), strtotime( $order_date ) ) ) );
+	printf( '<time datetime="%s">%s</time>', esc_attr( date_i18n( 'c', strtotime( $order_date ) ) ), esc_attr( date_i18n( wc_appointments_date_format(), strtotime( $order_date ) ) ) );
 	?>
 	)</h2>
 

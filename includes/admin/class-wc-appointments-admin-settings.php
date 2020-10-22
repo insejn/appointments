@@ -435,7 +435,7 @@ class WC_Appointments_Admin_Settings extends WC_Settings_Page {
 				if ( $last_synced ) {
 					$ls_timestamp = isset( $last_synced[0] ) && $last_synced[0] ? absint( $last_synced[0] ) : absint( current_time( 'timestamp' ) );
 					/* translators: %1$s: date format, %2$s: time format */
-					$ls_message = sprintf( __( '%1$s, %2$s', 'woocommerce-appointments' ), date_i18n( wc_date_format(), $ls_timestamp ), date_i18n( wc_time_format(), $ls_timestamp ) );
+					$ls_message = sprintf( __( '%1$s, %2$s', 'woocommerce-appointments' ), date_i18n( wc_appointments_date_format(), $ls_timestamp ), date_i18n( wc_appointments_time_format(), $ls_timestamp ) );
 				?>
 					<p class="last_synced"><?php echo esc_attr( $ls_message ); ?></p>
 				<?php } else { ?>

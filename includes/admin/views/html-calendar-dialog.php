@@ -65,6 +65,7 @@
 			var staff_name               = appointment.attr( 'data-staff_name' );
 			var when                     = appointment.attr( 'data-when' );
 			var duration                 = appointment.attr( 'data-duration' );
+			var addons                   = appointment.attr( 'data-addons' );
 			var event_qty                = appointment.attr( 'data-event_qty' );
 			var event_status             = appointment.attr( 'data-event_status' );
 			var event_status_label       = appointment.attr( 'data-event_status_label' );
@@ -144,6 +145,11 @@
 				// Duration
 				if ( duration ) {
 					dialog_inner.append( '<dl id="wca-detail-duration"><dt><?php esc_html_e( 'Duration', 'woocommerce-appointments' ); ?>:</dt><dd>' + duration + '</dd></dl>' );
+				}
+
+				// Addons.
+				if ( addons ) {
+					dialog_inner.append( '<dl id="wca-detail-addons"><dt><?php esc_html_e( 'Add-ons', 'woocommerce-appointments' ); ?>:</dt><dd>' + addons + '</dd></dl>' );
 				}
 
 				// Status

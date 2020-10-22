@@ -32,22 +32,22 @@ class WC_Appointments_WC_Ajax {
 
 		try {
 
-			$args                          = array();
-			$product                       = get_wc_product_appointment( $product_id );
-			$args['availability_rules']    = $product->get_availability_rules();
-			$args['default_availability']  = $product->get_default_availability();
-			$args['has_staff']             = $product->has_staff();
-			$args['has_staff_ids']         = $product->get_staff_ids();
-			$args['appointment_duration']  = in_array( $product->get_duration_unit(), array( 'minute', 'hour' ) ) ? 1 : $product->get_duration();
-			$args['staff_assignment']      = ! $product->has_staff() ? 'customer' : $product->get_staff_assignment();
-			$args['min_date']              = isset( $_POST['min_date'] ) ? strtotime( $_POST['min_date'] ) : $product->get_min_date_a();
-			$args['max_date']              = isset( $_POST['max_date'] ) ? strtotime( $_POST['max_date'] ) : $product->get_max_date_a();
+			$args                         = array();
+			$product                      = get_wc_product_appointment( $product_id );
+			$args['availability_rules']   = $product->get_availability_rules();
+			$args['default_availability'] = $product->get_default_availability();
+			$args['has_staff']            = $product->has_staff();
+			$args['has_staff_ids']        = $product->get_staff_ids();
+			$args['appointment_duration'] = in_array( $product->get_duration_unit(), array( 'minute', 'hour' ) ) ? 1 : $product->get_duration();
+			$args['staff_assignment']     = ! $product->has_staff() ? 'customer' : $product->get_staff_assignment();
+			$args['min_date']             = isset( $_POST['min_date'] ) ? strtotime( $_POST['min_date'] ) : $product->get_min_date_a();
+			$args['max_date']             = isset( $_POST['max_date'] ) ? strtotime( $_POST['max_date'] ) : $product->get_max_date_a();
 
 			$min_date = ( ! isset( $_POST['min_date'] ) ) ? strtotime( "+{$args['min_date']['value']} {$args['min_date']['unit']}", current_time( 'timestamp' ) ) : $args['min_date'];
 			$max_date = ( ! isset( $_POST['max_date'] ) ) ? strtotime( "+{$args['max_date']['value']} {$args['max_date']['unit']}", current_time( 'timestamp' ) ) : $args['max_date'];
 
-			// Staff availability.
 			/*
+			// Staff availability.
 			if ( $product->has_staff() ) {
 				foreach ( $product->get_staff_ids() as $staff_member_id ) {
 					$args['availability_rules'][ $staff_member_id ] = $product->get_availability_rules( $staff_member_id );

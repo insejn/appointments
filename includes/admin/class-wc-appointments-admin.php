@@ -42,6 +42,7 @@ class WC_Appointments_Admin {
 
 		include 'class-wc-appointments-admin-menus.php';
 		include 'class-wc-appointments-admin-staff-profile.php';
+		include 'class-wc-appointments-admin-exporters.php';
 	}
 
 	/**
@@ -323,6 +324,9 @@ class WC_Appointments_Admin {
 				'user_can_cancel'         => isset( $_POST['_wc_appointment_user_can_cancel'] ),
 				'cancel_limit_unit'       => wc_clean( $_POST['_wc_appointment_cancel_limit_unit'] ),
 				'cancel_limit'            => wc_clean( $_POST['_wc_appointment_cancel_limit'] ),
+				'user_can_reschedule'     => isset( $_POST['_wc_appointment_user_can_reschedule'] ),
+				'reschedule_limit_unit'   => wc_clean( $_POST['_wc_appointment_reschedule_limit_unit'] ),
+				'reschedule_limit'        => wc_clean( $_POST['_wc_appointment_reschedule_limit'] ),
 				'requires_confirmation'   => isset( $_POST['_wc_appointment_requires_confirmation'] ),
 				'customer_timezones'      => isset( $_POST['_wc_appointment_customer_timezones'] ),
 				'cal_color'               => wc_clean( $_POST['_wc_appointment_cal_color'] ),
@@ -633,6 +637,7 @@ class WC_Appointments_Admin {
 		wp_enqueue_style( 'wc_appointments_admin_styles', WC_APPOINTMENTS_PLUGIN_URL . '/assets/css/admin.css', true, WC_APPOINTMENTS_VERSION );
 		wp_enqueue_script( 'wp-color-picker' );
 		wp_register_script( 'wc_appointments_writepanel_js', WC_APPOINTMENTS_PLUGIN_URL . '/assets/js/writepanel' . $suffix . '.js', array( 'jquery', 'jquery-ui-datepicker' ), WC_APPOINTMENTS_VERSION, true );
+		wp_register_script( 'wc_appointments_exporter_js', WC_APPOINTMENTS_PLUGIN_URL . '/assets/js/appointment-export' . $suffix . '.js', array( 'jquery', 'jquery-ui-datepicker', 'wc-enhanced-select' ), WC_APPOINTMENTS_VERSION, true );
 
 		// Remove ACF plugin's timepicker scripts.
 		if ( 'product' === get_post_type() ) {
@@ -649,6 +654,7 @@ class WC_Appointments_Admin {
 			'nonce_staff_html'          => wp_create_nonce( 'appointable-staff-html' ),
 			'nonce_manual_sync'         => wp_create_nonce( 'add-manual-sync' ),
 			'nonce_oauth_redirect'      => wp_create_nonce( 'add-oauth-redirect' ),
+			'nonce_export_appointemnts' => wp_create_nonce( 'wc-appointment-export' ),
 
 			'i18n_minutes'              => esc_js( __( 'minutes', 'woocommerce-appointments' ) ),
 			'i18n_hours'                => esc_js( __( 'hours', 'woocommerce-appointments' ) ),
@@ -659,9 +665,16 @@ class WC_Appointments_Admin {
 			'ajax_url'                  => admin_url( 'admin-ajax.php' ),
 			'firstday'                  => absint( get_option( 'start_of_week', 1 ) ),
 			'calendar_image'            => WC()->plugin_url() . '/assets/images/calendar.png',
+
+	        'exporter'                  => array(
+				'string'     => __( 'Export', 'woocommerce-appointments' ),
+				'url'        => esc_url_raw( admin_url( 'edit.php?post_type=wc_appointment&page=appointment_exporter' ) ),
+				'permission' => current_user_can( 'export' ) ? true : false,
+			),
 		);
 
 		wp_localize_script( 'wc_appointments_writepanel_js', 'wc_appointments_writepanel_js_params', $params );
+		wp_localize_script( 'wc_appointments_exporter_js', 'wc_appointments_exporter_js_params', $params );
 	}
 
 	/**

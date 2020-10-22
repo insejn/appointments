@@ -82,6 +82,9 @@ class WC_Appointments_GCal {
 		// Process edited appointment.
 		add_action( 'woocommerce_appointment_process_meta', array( $this, 'sync_edited_appointment' ) );
 
+		// Process rescheduled appointment.
+		add_action( 'woocommerce_appointments_rescheduled_appointment', array( $this, 'sync_rescheduled_appointment' ) );
+
 		// Sync trashed/untrashed appointments.
 		add_action( 'trashed_post', array( $this, 'remove_from_gcal' ) );
 		add_action( 'untrashed_post', array( $this, 'sync_untrashed_appointment' ) );
@@ -182,11 +185,11 @@ class WC_Appointments_GCal {
 			$option = $option;
 		}
 
-		$this->user_id    = $option;
-		$calendar_id      = get_user_meta( $option, 'wc_appointments_gcal_calendar_id', true );
-		$calendar_id      = $calendar_id ? $calendar_id : get_option( 'wc_appointments_gcal_calendar_id' );
-		$two_way          = get_user_meta( $option, 'wc_appointments_gcal_twoway', true );
-		$two_way          = $two_way ? $two_way : get_option( 'wc_appointments_gcal_twoway' );
+		$this->user_id = $option;
+		$calendar_id   = get_user_meta( $option, 'wc_appointments_gcal_calendar_id', true );
+		$calendar_id   = $calendar_id ? $calendar_id : get_option( 'wc_appointments_gcal_calendar_id' );
+		$two_way       = get_user_meta( $option, 'wc_appointments_gcal_twoway', true );
+		$two_way       = $two_way ? $two_way : get_option( 'wc_appointments_gcal_twoway' );
 
 		$this->set_calendar_id( $calendar_id );
 		$this->set_twoway( $two_way );
@@ -302,6 +305,7 @@ class WC_Appointments_GCal {
 				'client_secret' => $this->get_client_secret(),
 				'refresh_token' => $refresh_token,
 				'grant_type'    => 'refresh_token',
+				'access_type'   => 'offline',
 			);
 
 			$params = array(
@@ -349,6 +353,7 @@ class WC_Appointments_GCal {
 				'client_secret' => $this->get_client_secret(),
 				'redirect_uri'  => $this->get_redirect_uri(),
 				'grant_type'    => 'authorization_code',
+				'access_type'   => 'offline',
 			);
 
 			$params = array(
@@ -451,8 +456,6 @@ class WC_Appointments_GCal {
 		if ( 'yes' === $this->get_debug() ) {
 			$this->log->add( $this->id, 'Failed to disconnect from the Google Calendar app' ); #debug
 		}
-
-		return;
 	}
 
 	/**
@@ -688,6 +691,17 @@ class WC_Appointments_GCal {
 	 * @return void
 	 */
 	public function sync_untrashed_appointment( $appointment_id ) {
+		$this->maybe_sync_to_gcal_from_status( $appointment_id );
+	}
+
+	/**
+	 * Sync Appointment with GCal when appointment is rescheduled.
+	 *
+	 * @param  int $appointment_id Appointment ID
+	 *
+	 * @return void
+	 */
+	public function sync_rescheduled_appointment( $appointment_id ) {
 		$this->maybe_sync_to_gcal_from_status( $appointment_id );
 	}
 
@@ -1376,7 +1390,7 @@ class WC_Appointments_GCal {
 					}
 				}
 
-				// Check if appointment ID is save in extendedProperties.
+				// Check if appointment ID is saved in extendedProperties.
 				if ( isset( $event['extendedProperties']['shared']['appointment_id'] ) ) {
 					$appointment_eid = absint( $event['extendedProperties']['shared']['appointment_id'] );
 					$appointment_eid = is_string( get_post_status( $appointment_eid ) ) ? $appointment_eid : 0; #check if post exists.
@@ -1390,13 +1404,13 @@ class WC_Appointments_GCal {
 						// Get appointment object.
 						$appointment = get_wc_appointment( $appointment_eid );
 
-						// Don't cancel trashed appointment.
-						if ( 'trash' === $appointment->get_status() ) {
+						// Don't proceed if ID is not of a valid appointment.
+						if ( ! is_a( $appointment, 'WC_Appointment' ) ) {
 							continue;
 						}
 
-						// Don't proceed if ID is not of a valid appointment.
-						if ( ! is_a( $appointment, 'WC_Appointment' ) ) {
+						// Don't cancel trashed appointment.
+						if ( 'trash' === $appointment->get_status() ) {
 							continue;
 						}
 

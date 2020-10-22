@@ -25,7 +25,7 @@ if ( $appointment->get_order() ) {
 	echo sprintf( __( 'Hello %s', 'woocommerce-appointments' ), ( is_callable( array( $appointment->get_order(), 'get_billing_first_name' ) ) ? $appointment->get_order()->get_billing_first_name() : $appointment->get_order()->billing_first_name ) ) . "\n\n";
 }
 
-if ( $appointment->get_start_date( wc_date_format(), '' ) === date( wc_date_format() ) ) :
+if ( $appointment->get_start_date( wc_appointments_date_format(), '' ) === date( wc_appointments_date_format() ) ) :
 	echo __( 'Your appointment will take place today.', 'woocommerce-appointments' ) . "\n\n";
 else :
 	/* translators: %1$s: appointment start date */

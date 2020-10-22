@@ -51,6 +51,8 @@ class WC_Product_Addons_Field_List extends WC_Product_Addons_Field {
 					'price_type'    => $option['price_type'],
 					'duration'      => isset( $option['duration'] ) ? $option['duration'] : 0,
 					'duration_type' => isset( $option['duration_type'] ) ? $option['duration_type'] : '',
+					'hide_duration' => isset( $this->addon['wc_appointment_hide_duration_label'] ) && $this->addon['wc_appointment_hide_duration_label'] ? 1 : 0,
+					'hide_price'    => isset( $this->addon['wc_appointment_hide_price_label'] ) && $this->addon['wc_appointment_hide_price_label'] ? 1 : 0,
 				);
 			}
 		}

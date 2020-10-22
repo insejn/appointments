@@ -39,7 +39,7 @@ class WC_Appointment_Cart_Manager {
 		add_filter( 'woocommerce_add_to_cart_validation', array( $this, 'validate_appointment_requires_confirmation' ), 20, 2 );
 		add_action( 'woocommerce_cart_item_removed', array( $this, 'cart_item_removed' ), 20 );
 		add_action( 'woocommerce_cart_item_restored', array( $this, 'cart_item_restored' ), 20 );
-		add_action( 'woocommerce_cart_emptied', array( $this, 'cart_emptied' ), 20 );
+		#add_action( 'woocommerce_cart_emptied', array( $this, 'cart_emptied' ), 20 );
 
 		if ( 'yes' === get_option( 'woocommerce_cart_redirect_after_add' ) ) {
 			add_filter( 'woocommerce_add_to_cart_redirect', array( $this, 'add_to_cart_redirect' ) );
@@ -216,6 +216,7 @@ class WC_Appointment_Cart_Manager {
 	 *
 	 * Remove all 'in-cart' appointments and assign them 'was-in-cart' status.
 	 */
+	/*
 	public function cart_emptied() {
 		// Get all appointments with 'in-cart' status.
 		$appointment_ids = WC_Appointment_Data_Store::get_appointment_ids_by(
@@ -236,6 +237,7 @@ class WC_Appointment_Cart_Manager {
 
 		#print '<pre>'; print_r( $appointment_ids ); print '</pre>';
 	}
+	*/
 
 	/**
 	 * Schedule appointment to be deleted if inactive.

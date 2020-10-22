@@ -32,7 +32,7 @@ class WC_Appointments_Widget_Availability extends WC_Widget {
 
 		$suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
 
-		wp_register_script( 'wc-appointments-availability-filter', WC_APPOINTMENTS_PLUGIN_URL . '/assets/js/availability-filter' . $suffix . '.js', array( 'jquery-ui-datepicker', 'underscore' ), WC_APPOINTMENTS_VERSION, true );
+		wp_register_script( 'wc-appointments-availability-filter', WC_APPOINTMENTS_PLUGIN_URL . '/assets/js/availability-filter' . $suffix . '.js', array( 'jquery-ui-datepicker', 'underscore', 'wc-appointments-moment' ), WC_APPOINTMENTS_VERSION, true );
 		wp_localize_script(
 			'wc-appointments-availability-filter',
 			'wc_appointments_availability_filter_params',
@@ -48,6 +48,7 @@ class WC_Appointments_Widget_Availability extends WC_Widget {
 				'dayNamesMin'     => array_values( $wp_locale->weekday_initial ),
 				'firstDay'        => get_option( 'start_of_week' ),
 				'isRTL'           => is_rtl(),
+				'dateFormat'      => wc_appointments_convert_to_moment_format( wc_appointments_date_format() ),
 			)
 		);
 
@@ -85,22 +86,47 @@ class WC_Appointments_Widget_Availability extends WC_Widget {
 		$min_date = isset( $_GET['min_date'] ) ? wc_clean( wp_unslash( $_GET['min_date'] ) ) : ''; // WPCS: input var ok, CSRF ok.
 		$max_date = isset( $_GET['max_date'] ) ? wc_clean( wp_unslash( $_GET['max_date'] ) ) : ''; // WPCS: input var ok, CSRF ok.
 
+		$min_date_local = $min_date ? date_i18n( wc_appointments_date_format(), strtotime( $min_date ) ) : '';
+		$max_date_local = $max_date ? date_i18n( wc_appointments_date_format(), strtotime( $max_date ) ) : '';
+
+		#var_dump( $min_date_local );
+
 		$this->widget_start( $args, $instance );
 
 		if ( '' === get_option( 'permalink_structure' ) ) {
-			$form_action = remove_query_arg( array( 'page', 'paged', 'product-page' ), add_query_arg( $wp->query_string, '', home_url( $wp->request ) ) );
+			$form_action = remove_query_arg(
+				array(
+					'page',
+					'paged',
+					'product-page',
+					'min_date_label',
+					'max_date_label',
+				),
+				add_query_arg(
+					$wp->query_string,
+					'',
+					home_url( $wp->request )
+				)
+			);
 		} else {
 			$form_action = preg_replace( '%\/page/[0-9]+%', '', home_url( trailingslashit( $wp->request ) ) );
 		}
 
+		// Fields id="min_date_label" and id="max_date_label"
+		// have no name defined are not submitted.
 		echo '<form method="get" action="' . esc_url( $form_action ) . '">
 			<div class="date_picker_wrapper">
-				<label for="min_date">' . esc_html__( 'Start Date:', 'woocommerce-appointments' ) . '</label>
-				<input type="text" id="min_date" class="date-picker" name="min_date" value="' . esc_attr( $min_date ) . '" autocomplete="off" readonly="readonly" />
-				<label for="max_date">' . esc_html__( 'End Date:', 'woocommerce-appointments' ) . '</label>
-				<input type="text" id="max_date" class="date-picker" name="max_date" value="' . esc_attr( $max_date ) . '" autocomplete="off" readonly="readonly" />
+				<div class="date_picker_inner date_picker_start">
+					<label for="min_date_label">' . esc_html__( 'Start Date:', 'woocommerce-appointments' ) . '</label>
+					<input type="text" id="min_date_label" class="date-picker" value="' . esc_attr( $min_date_local ) . '" autocomplete="off" readonly="readonly" />
+					<input type="hidden" id="min_date" class="date-picker-field" name="min_date" value="' . esc_attr( $min_date ) . '" autocomplete="off" readonly="readonly" />
+				</div>
+				<div class="date_picker_inner date_picker_end">
+					<label for="max_date_label">' . esc_html__( 'End Date:', 'woocommerce-appointments' ) . '</label>
+					<input type="text" id="max_date_label" class="date-picker" value="' . esc_attr( $max_date_local ) . '" autocomplete="off" readonly="readonly" />
+					<input type="hidden" id="max_date" class="date-picker-field" name="max_date" value="' . esc_attr( $max_date ) . '" autocomplete="off" readonly="readonly" />
+				</div>
 				<button type="submit" class="button">' . esc_html__( 'Filter', 'woocommerce-appointments' ) . '</button>
-				' . wc_query_string_form_fields( null, array( 'min_date', 'max_date' ), '', true ) . '
 				<div class="clear"></div>
 			</div>
 		</form>'; // WPCS: XSS ok.
@@ -119,10 +145,12 @@ class WC_Appointments_Widget_Availability extends WC_Widget {
 
 		// Get available appointments.
         if ( $this->is_valid_date( $min_date ) && $this->is_valid_date( $max_date ) ) {
-            $matches = $this->get_available_products( $min_date, $max_date );
+            $maches = $this->get_available_products( $min_date, $max_date );
 
-			if ( $matches ) {
-				return $matches;
+			if ( $maches ) {
+				return $maches;
+			} else {
+				return false;
 			}
         }
 	}
@@ -133,12 +161,10 @@ class WC_Appointments_Widget_Availability extends WC_Widget {
      * @param string $start_date_raw YYYY-MM-DD format
      * @param string $end_date_raw YYYY-MM-DD format
      * @param int $quantity Number of people to appoint
-     * @param string $behavior Whether to return exact matches
+     * @param string $behavior Whether to return exact maches
      * @return array Available post IDs
      */
     protected function get_available_products( $start_date_raw, $end_date_raw, $quantity = 1, $behavior = 'default' ) {
-        $matches = array();
-
         // Separate dates from times.
         $start_date = explode( ' ', $start_date_raw );
         $end_date   = explode( ' ', $end_date_raw );
@@ -148,28 +174,16 @@ class WC_Appointments_Widget_Availability extends WC_Widget {
             $start_date[1] = '12:00';
         }
 
-        $start = explode( '-', $start_date[0] );
-
-		// Timezone.
-		$tzstring = isset( $_COOKIE['appointments_time_zone'] ) ? $_COOKIE['appointments_time_zone'] : '';
-		$tzstring = isset( $posted['wc_appointments_field_timezone'] ) ? $posted['wc_appointments_field_timezone'] : $tzstring;
-
-        $args = array(
-			'quantity'                               => $quantity,
-            'wc_appointments_field_staff'            => 0,
-            'wc_appointments_field_duration'         => 1,
-			'wc_appointments_field_timezone'         => $tzstring,
-            'wc_appointments_field_start_date_year'  => $start[0],
-            'wc_appointments_field_start_date_month' => $start[1],
-            'wc_appointments_field_start_date_day'   => $start[2],
-        );
-
 		$appointable_product_ids = WC_Data_Store::load( 'product-appointment' )->get_appointable_product_ids( true );
 
 		// If no products yet, return zero.
 		if ( ! $appointable_product_ids ) {
 			return;
 		}
+
+		// Gather maches of available product IDs.
+		$maches  = array();
+		$maches2 = array();
 
         // Loop through all posts
         foreach ( $appointable_product_ids as $appointable_product_id ) {
@@ -179,54 +193,54 @@ class WC_Appointments_Widget_Availability extends WC_Widget {
             // Get product duration unit.
             $duration_unit = $appointable_product->get_duration_unit();
 
-            // Support time
-            if ( in_array( $duration_unit, array( 'minute', 'hour' ) ) ) {
-                if ( ! empty( $start_date[1] ) ) {
-                    $args['wc_appointments_field_start_date_time'] = $start_date[1];
-                }
-            }
-
-            $posted_data = wc_appointments_get_posted_data( $args, $appointable_product );
-			$validate    = $appointable_product->is_appointable( $posted_data );
-
             // All slots are available (exact match).
-			// TODO Add back time filtering when available as filter.
-            if ( ! in_array( $duration_unit, array( 'minute', 'hour' ) ) ) {
-				// Only add matches, when date is appointmable.
-				if ( ! is_wp_error( $validate ) ) {
-					$matches[] = $appointable_product->get_id();
-				}
-			// Any slot between the given dates are available.
-			} else {
-				$appointment_form = new WC_Appointment_Form( $appointable_product );
-                $from             = strtotime( $start_date_raw );
-                $to               = $start_date_raw === $end_date_raw ? strtotime( '+ 1 day', strtotime( $end_date_raw ) ) - 1 : strtotime( $end_date_raw );
-                $slots_in_range   = $appointment_form->product->get_slots_in_range( $from, $to );
-                $available_slots  = $appointment_form->product->get_available_slots(
-					array(
-	                    'slots' => $slots_in_range,
-	                    'from'  => $from,
-	                    'to'    => $to,
-	                )
-				);
+			// TODO Add time filtering when available as filter.
+			$appointment_form = new WC_Appointment_Form( $appointable_product );
+			$check_date       = strtotime( $start_date_raw );
+			$end_date         = strtotime( $end_date_raw );
+			$min_date         = strtotime( '- 1 day', strtotime( $start_date_raw ) );
+			$max_date         = $start_date_raw === $end_date_raw ? strtotime( '+ 2 days', strtotime( $end_date_raw ) ) : strtotime( '+ 1 day', strtotime( $end_date_raw ) );
 
-				/*
-				if ( 6911 === $appointable_product_id ) {
-					print '<pre>'; print_r( $slots_in_range ); print '</pre>';
-					print '<pre>'; print_r( $validate ); print '</pre>';
-					print '<pre>'; print_r( $available_slots ); print '</pre>';
+			// Check against availability rules.
+			$timestamp = $check_date;
+			while ( $timestamp < $end_date ) {
+				$appointable_day = WC_Product_Appointment_Rule_Manager::check_availability_rules_against_date( $appointable_product, $timestamp );
+				if ( $appointable_day ) {
+					#print '<pre>'; print_r( date( 'Y-m-d', $timestamp ) ); print '</pre>';
+					$maches[] = $timestamp;
 				}
-				*/
+				$timestamp = strtotime( '+1 day', $timestamp );
+			}
 
+			// Skip the product when no availability.
+			if ( ! $maches ) {
+				continue;
+			}
 
-				// TODO Restricted days still not counted in.
-				if ( $available_slots ) {
-					$matches[] = $appointable_product->get_id();
+			// Find scheduled slots for the range.
+			$scheduled_day_slots = WC_Appointments_Controller::find_scheduled_day_slots( $appointable_product, $min_date, $max_date, 'Y-m-d' );
+
+			#print '<pre>'; print_r( $appointable_product_id ); print '</pre>';
+			#print '<pre>'; print_r( $scheduled_day_slots ); print '</pre>';
+
+			// Check for each each day in range.
+			$timestamp2 = $check_date;
+			while ( $timestamp2 <= $end_date ) {
+				// Check against scheduled appointments.
+				$date = date( 'Y-m-d', $timestamp2 );
+				if ( ! isset( $scheduled_day_slots['fully_scheduled_days'][ $date ] ) && ! isset( $scheduled_day_slots['unavailable_days'][ $date ] ) ) {
+					$maches2[] = $appointable_product->get_id();
+					#print '<pre>'; print_r( $date . ' - ' . $appointable_product->get_id() . ' - ' . isset( $scheduled_day_slots['fully_scheduled_days'][ $date ] ) ); print '</pre>';
 				}
-            }
+
+				// move to next day
+				$timestamp2 = strtotime( '+1 day', $timestamp2 );
+			}
         }
 
-		return $matches;
+		#print '<pre>'; print_r( array_unique( $maches2 ) ); print '</pre>';
+
+		return array_unique( $maches2 );
     }
 
 	/**

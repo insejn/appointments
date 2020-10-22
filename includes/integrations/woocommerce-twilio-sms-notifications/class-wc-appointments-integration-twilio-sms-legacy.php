@@ -109,7 +109,7 @@ class WC_Appointments_Integration_WCTSN {
 	 */
 	public function sms_replace_message_variables( $message, $order, $appointment_id ) {
 		$appointment = get_wc_appointment( $appointment_id );
-		$appointment_time = $appointment->is_all_day() ? $appointment->get_start_date( wc_date_format(), '' ) : $appointment->get_start_date( wc_date_format(), '' ) . ', ' . $appointment->get_start_date( '', wc_time_format() );
+		$appointment_time = $appointment->is_all_day() ? $appointment->get_start_date( wc_appointments_date_format(), '' ) : $appointment->get_start_date( wc_appointments_date_format(), '' ) . ', ' . $appointment->get_start_date( '', wc_appointments_time_format() );
 
 		$replacements = array(
 			'%shop_name%'        => get_bloginfo( 'name' ),

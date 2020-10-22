@@ -37,8 +37,9 @@ class WC_Appointments_REST_Availabilities_Controller extends WC_REST_Controller 
 			'/' . $this->rest_base,
 			array(
 				array(
-					'methods'  => WP_REST_Server::READABLE,
-					'callback' => array( $this, 'get_items' ),
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_items' ),
+					'permission_callback' => '__return_true',
 				),
 			)
 		);

@@ -181,7 +181,7 @@ class EDD_SL_Plugin_License {
 		$bizz_license_settings = array(
 			array(
 				'id'      => $this->item_shortname . '_license_key',
-				'name'    => sprintf( '%1$s License Key', $this->item_name ),
+				'name'    => sprintf( '%1$s', $this->item_name ),
 				'desc'    => '',
 				'type'    => 'license_key',
 				'options' => array( 'is_valid_license_option' => $this->item_shortname . '_license_active' ),

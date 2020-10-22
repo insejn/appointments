@@ -33,6 +33,8 @@ $GLOBALS['product'] = $product; #Add-ons integration.
 						<?php
 						// Show quantity only when maximum qty is larger than 1 ... duuuuuuh
 						if ( $product->get_qty() > 1 && $product->get_qty_max() > 1 ) {
+							do_action( 'woocommerce_before_add_to_cart_quantity' );
+
 							woocommerce_quantity_input(
 								array(
 									'min_value'   => apply_filters( 'woocommerce_quantity_input_min', $product->get_qty_min(), $product ),
@@ -40,13 +42,15 @@ $GLOBALS['product'] = $product; #Add-ons integration.
 									'input_value' => isset( $_POST['quantity'] ) ? wc_stock_amount( $_POST['quantity'] ) : 1,
 								)
 							);
+
+							do_action( 'woocommerce_after_add_to_cart_quantity' );
 						}
 						?>
 						<input type="submit" name="add_appointment_2" class="button-primary wc-appointments-appointment-form-button single_add_to_cart_button disabled" value="<?php esc_html_e( 'Add New Appointment', 'woocommerce-appointments' ); ?>" />
-						<input type="hidden" name="customer_id" value="<?php echo esc_attr( $customer_id ); ?>" />
-						<input type="hidden" name="appointable_product_id" value="<?php echo esc_attr( $appointable_product_id ); ?>" />
-						<input type="hidden" name="add-to-cart" value="<?php echo esc_attr( $appointable_product_id ); ?>" />
-						<input type="hidden" name="appointment_order" value="<?php echo esc_attr( $appointment_order ); ?>" />
+						<input type="hidden" name="customer_id" value="<?php esc_attr_e( $customer_id ); ?>" />
+						<input type="hidden" name="appointable_product_id" value="<?php esc_attr_e( $appointable_product_id ); ?>" />
+						<input type="hidden" name="add-to-cart" value="<?php esc_attr_e( $appointable_product_id ); ?>" />
+						<input type="hidden" name="appointment_order" value="<?php esc_attr_e( $appointment_order ); ?>" />
 						<?php wp_nonce_field( 'add_appointment_notification' ); ?>
 					</td>
 				</tr>

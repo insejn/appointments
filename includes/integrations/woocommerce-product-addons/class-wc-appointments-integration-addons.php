@@ -39,6 +39,7 @@ class WC_Appointments_Integration_Addons {
 		add_filter( 'woocommerce_product_addons_option_duration', array( $this, 'hide_product_addons_option_duration' ), 10, 5 );
 		add_filter( 'woocommerce_product_addons_price', array( $this, 'hide_product_addons_option_price' ), 10, 5 );
 		add_filter( 'woocommerce_product_addons_option_price', array( $this, 'hide_product_addons_option_price' ), 10, 5 );
+		add_filter( 'woocommerce_addons_add_price_to_name', array( $this, 'maybe_hide_addon_price_label' ), 20, 2 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'addons_script_styles' ), 100 );
 	}
 
@@ -210,13 +211,13 @@ class WC_Appointments_Integration_Addons {
 			<div class="wc-pao-row wc-pao-addon-hide_duration-setting <?php echo esc_attr( $display_hide_duration_setting_class ); ?>">
 				<label for="wc-pao-addon-hide_duration-<?php echo esc_attr( $loop ); ?>">
 					<input type="checkbox" id="wc-pao-addon-hide_duration-<?php echo esc_attr( $loop ); ?>" name="addon_wc_appointment_hide_duration_label[<?php echo esc_attr( $loop ); ?>]" <?php checked( $hide_duration_enable, 1 ); ?> />
-					<?php esc_html_e( 'Hide duration label for customers', 'woocommerce-appointments' ); ?>
+					<?php esc_html_e( 'Hide duration label', 'woocommerce-appointments' ); ?>
 				</label>
 			</div>
 			<div class="wc-pao-row wc-pao-addon-hide_price-setting <?php echo esc_attr( $display_hide_price_setting_class ); ?>">
 				<label for="wc-pao-addon-hide_price-<?php echo esc_attr( $loop ); ?>">
 					<input type="checkbox" id="wc-pao-addon-hide_price-<?php echo esc_attr( $loop ); ?>" name="addon_wc_appointment_hide_price_label[<?php echo esc_attr( $loop ); ?>]" <?php checked( $hide_price_enable, 1 ); ?> />
-					<?php esc_html_e( 'Hide price label for customers', 'woocommerce-appointments' ); ?>
+					<?php esc_html_e( 'Hide price label', 'woocommerce-appointments' ); ?>
 				</label>
 			</div>
 			<div class="wc-pao-row wc-pao-addon-show_on_top-setting <?php echo esc_attr( $display_show_on_top_setting_class ); ?>">
@@ -334,7 +335,7 @@ class WC_Appointments_Integration_Addons {
 
 				$name = $addon['name'];
 
-				if ( $addon['price'] > 0 && apply_filters( 'woocommerce_addons_add_price_to_name', true ) ) {
+				if ( $addon['price'] > 0 && apply_filters( 'woocommerce_addons_add_price_to_name', true, $addon ) ) {
 					$name .= ' (' . strip_tags( wc_price(  WC_Product_Addons_Helper::get_product_addon_price_for_display( $addon['price'] ) ) ) . ')';
 				}
 
@@ -446,12 +447,27 @@ class WC_Appointments_Integration_Addons {
 	 *
 	 */
 	public function hide_product_addons_option_price( $posted, $option, $key, $addon, $type = '' ) {
+		#error_log( var_export( $addon, true ) );
 		$hide_label = isset( $addon['wc_appointment_hide_price_label'] ) ? $addon['wc_appointment_hide_price_label'] : false;
 		if ( $hide_label ) {
 			return;
 		}
 
 		return $posted;
+	}
+
+	/**
+	 * Optionally hide price label for customers.
+	 *
+	 */
+	public function maybe_hide_addon_price_label( $return, $addon ) {
+		#error_log( var_export( $addon, true ) );
+		$hide_label = isset( $addon['hide_price'] ) ? $addon['hide_price'] : false;
+		if ( $hide_label ) {
+			return;
+		}
+
+		return $return;
 	}
 
 	/**

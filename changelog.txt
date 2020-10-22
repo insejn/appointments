@@ -1,5 +1,107 @@
 *** WooCommerce Appointments Changelog ***
 
+2020.10.21 - version 4.10.2
+* Improvement   - Compatibility with WordPress 5.6.
+* Improvement   - Ensure cache expires.
+* Improvement   - Replace WC date and time formats with function to avoid empty strings.
+* Improvement   - Searching for appointments in admin not working ok without orders.
+* Improvement   - Hiding addon price and/or duration label across board (emails, orders,...).
+* Improvement   - Updated all translations.
+* Fix           - Pagination for appointments in My account not working correctly.
+* Fix           - Remove deprecated jQuery methods.
+* Fix           - When retrieving ICS file, Use `get_site_url` instead of `home_url` for multisite installs.
+
+2020.10.20 - version 4.10.1
+* Improvement   - Harden the compatibility with product add-ons extension.
+* Improvement   - Cleaned the onboarding screen from unnecessary extensions.
+* Fix           - When creating new account, add customer from created order.
+* Fix           - Follow Ups not working ok with v4.10.0.
+
+2020.10.09 - version 4.10.0
+* Improvement   - Compatibility with WooCommerce 4.6.
+* Improvement   - Possibility to change all arguments for appointment export functionality.
+* Improvement   - Add-ons trigger admin-ajax on every char typed - only trigger on cost/duration change.
+* Improvement   - Hide appointment status on thank you page, since it is not relevant there.
+* Improvement   - Send a note to customer, when they have rescheduled their appointment.
+* Improvement   - Option to send a note to customer, when appointment is manually updated by admin or staff.
+* Improvement   - Added $appointment object to filters:
+                    + woocommerce_appointments_remind_before_time
+                    + woocommerce_appointments_complete_time
+                    + woocommerce_appointments_follow_up_time
+* Improvement   - Datepicker in the availability widget needs to use local WP date format.
+* Improvement   - Updated Product Add-ons to 3.1.0.
+* Improvement   - Updated all translations.
+* Improvement   - Compatibility with WooCommerce Box Office extension.
+* Improvement   - Added hooks before and after quantity field for better compatibility with external plugins.
+* Fix           - Free appointments that require confirmation should not ask the client for payment.
+* Fix           - Current appointments not showing in customer account.
+* Fix           - Fix SQL query filtering for availabilities.
+* Fix           - Restricting days option missing Sat and Sun due to CSS bug.
+* Fix           - Duration not taken into account with NOT available rules.
+* Fix           - Availability widget not checking all dates in range.
+* Fix           - Automatically assigned (all staff together) not working ok.
+* Fix           - Product with staff members (one unavailable) and inventory more than 1 not working fine.
+* Fix           - Fatal error in 4.9.9 regarding Follow Ups integration.
+* Fix           - When quantity is more than the max - it shows wrong 'slots left' message.
+* Fix           - Linted PHP files to prepare everything for PHP 8.
+* Fix           - Slots visible from previously selected staff (if other staff has no availability).
+
+2020.08.19 - version 4.9.10
+* Improvement   - Google Calendar oAuth access set to offline to work when user is absent.
+* Improvement   - Compatibility with WooCommerce 4.4.
+* Improvement   - Lowered transient deletion to 500 at a time. Avoid timeout.
+* Improvement   - 'woocommerce_appointment_export_data_args' to allow changing export data arguments.
+* Improvement   - WordPress 5.5 metabox arrows removed from appointment info edit screen.
+* Improvement   - Brought back stupid Marketing menu item, since WooCommerce moved coupons there.
+* Fix           - WordPress 5.5 REST API compatibility changes.
+* Fix           - Check for appointment object before looking further.
+* Fix           - date_i18n bug.
+* Fix           - Product Availability rule with lowest Quantity overrides all other quantities.
+* Fix           - Rescheduling does not apply changes to synced gCal event.
+* Fix           - Availability widget showing products that have no availability.
+
+2020.07.27 - version 4.9.9
+* Improvement   - Compatibility with WordPress 5.5.
+* Improvement   - Additional checks for email templates to make sure appointment object is present.
+* Improvement   - Updated Product Add-ons to 3.0.36.
+* Fix           - 'woocommerce_cart_emptied' can cause overbookings.
+* Fix           - Appointments Export does not export add-ons.
+* Fix           - Adjust for timezone when requesting available slots from the API.
+
+2020.07.07 - version 4.9.8
+* Feature       - Rescheduling appointments by customers (when enabled).
+* Improvement   - Updated Product Add-ons to 3.0.34.
+* Improvement   - Remove WooCommerce Marketing menu (again).
+* Improvement   - Updated all translations.
+* Fix           - Add-on images notice, when no image assigned to swatch option.
+* Fix           - Multiple shortcodes on same page with autoselect don't work.
+* Fix           - Using 'all staff together' shows unavailable days (without slots).
+* Fix           - Twilio SMS integration: reminders not going out at the right time.
+* Fix           - Input fields styling in admin misaligned.
+* Fix           - Make sure staff selection is not crippled by selectWoo script.
+* Fix           - Quatity add-on allows overbooking in backend.
+
+2020.06.23 - version 4.9.7
+* Feature       - Export appointments to CSV.
+* Improvement   - Added add-ons to appointment list and calendars in admin.
+* Improvement   - Compatibility with WooCommerce 4.3. Beta tested.
+* Improvement   - Add product pricing rules and add-on rules to standard WC import/export.
+* Improvement   - Updated all translations.
+* Improvement   - Minimum WooCommerce version requirement is now 3.1.
+* Improvement   - Datepickers in admin do not require jQuery UI css any more.
+* Fix           - Scheduling window defined in hours and over 24 hours not working ok.
+* Fix           - Possible bug in Gmail with multiple ICS files in one email.
+* Fix           - Admin calendar not linking to synced events.
+
+2020.06.13 - version 4.9.6
+* Improvement   - Improved French translation. Big thank you to Alexandre Doyen.
+* Improvement   - Add appointment object variable to wc_twilio_sms_appointments_token_map filter.
+* Fix           - Overlapping appointments in admin calendar over the header section.
+* Fix           - Fresh installation can throw error since plugin version is not saved yet.
+* Fix           - Availability rules spanning overnight not removing time slots.
+* Fix           - Inventory acting weird for next day when day before goes after midnight.
+* Fix           - Availability widget showing products when none have availability.
+
 2020.05.21 - version 4.9.5
 * Improvement   - Compatibility with WooCommerce Follow Up Emails 4.9.1.
 * Improvement   - Updated Product Add-ons to 3.0.33.

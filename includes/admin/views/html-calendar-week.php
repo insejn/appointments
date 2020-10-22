@@ -98,7 +98,7 @@
 					'position'      : 'fixed',
 					'top'           : scrollTopOffset,
 					'width'         : contentWrapWidth,
-					'z-index'       : '10'
+					'z-index'       : '11'
 				} );
 				floatingBody.css( {
 					'margin-top': headerHeight
@@ -234,7 +234,7 @@
 									$past_on_cal    = date( 'Y-m-d', $start_of_week ) < date( 'Y-m-d', $current_timestamp );
 									$current_class .= $past_on_cal ? ' past' : '';
 									echo "<div class='header_column$current_class' data-time='" . date( 'Y-m-d', $start_of_week ) . "'>";
-										echo '<div class="header_label week_label"><a href="' . admin_url( 'edit.php?post_type=wc_appointment&page=appointment_calendar&view=day&tab=calendar&calendar_day=' . date( 'Y-m-d', $start_of_week ) ) . '" title="' . date( wc_date_format(), $start_of_week ) . '">' . date( 'D', $start_of_week ) . ' <span class="daynum">' . date( 'j', $start_of_week ) . '</span></a></div>';
+										echo '<div class="header_label week_label"><a href="' . admin_url( 'edit.php?post_type=wc_appointment&page=appointment_calendar&view=day&tab=calendar&calendar_day=' . date( 'Y-m-d', $start_of_week ) ) . '" title="' . date( wc_appointments_date_format(), $start_of_week ) . '">' . date( 'D', $start_of_week ) . ' <span class="daynum">' . date( 'j', $start_of_week ) . '</span></a></div>';
 										echo '<div class="header_allday">';
 											echo '<div class="events allday">';
 												$this->list_events(
@@ -261,7 +261,7 @@
 							<?php
 							for ( $i = 0; $i < 24; $i ++ ) :
 								if ( 24 != $i ) {
-									echo '<div class="hour_label"><label>' . date_i18n( wc_time_format(), strtotime( "midnight +{$i} hour" ) ) . '</label></div>';
+									echo '<div class="hour_label"><label>' . date_i18n( wc_appointments_time_format(), strtotime( "midnight +{$i} hour" ) ) . '</label></div>';
 								}
 							endfor;
 							?>

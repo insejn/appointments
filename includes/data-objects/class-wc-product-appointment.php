@@ -40,6 +40,9 @@ class WC_Product_Appointment extends WC_Product_Appointment_Compatibility {
 		'user_can_cancel'         => false,
 		'cancel_limit_unit'       => 'month',
 		'cancel_limit'            => 1,
+		'user_can_reschedule'     => false,
+		'reschedule_limit_unit'   => 'month',
+		'reschedule_limit'        => 1,
 		'requires_confirmation'   => false,
 		'customer_timezones'      => false,
 		'cal_color'               => '',
@@ -626,7 +629,7 @@ class WC_Product_Appointment extends WC_Product_Appointment_Compatibility {
 	 * @param string $value
 	 */
 	public function set_cancel_limit_unit( $value ) {
-		$value = in_array( $value, array( 'month', 'day', 'hour', 'minute' ) ) ? $value : 'month';
+		$value = in_array( $value, array( 'month', 'day', 'hour', 'minute' ) ) ? $value : 'day';
 		$this->set_prop( 'cancel_limit_unit', $value );
 	}
 
@@ -647,6 +650,64 @@ class WC_Product_Appointment extends WC_Product_Appointment_Compatibility {
 	 */
 	public function set_cancel_limit( $value ) {
 		$this->set_prop( 'cancel_limit', max( 1, absint( $value ) ) );
+	}
+
+	/**
+	 * Get user_can_reschedule.
+	 *
+	 * @param  string $context
+	 * @return boolean
+	 */
+	public function get_user_can_reschedule( $context = 'view' ) {
+		return $this->get_prop( 'user_can_reschedule', $context );
+	}
+
+	/**
+	 * Set user_can_reschedule.
+	 *
+	 * @param boolean $value
+	 */
+	public function set_user_can_reschedule( $value ) {
+		$this->set_prop( 'user_can_reschedule', wc_appointments_string_to_bool( $value ) );
+	}
+
+	/**
+	 * Get reschedule_limit_unit.
+	 *
+	 * @param  string $context
+	 * @return string
+	 */
+	public function get_reschedule_limit_unit( $context = 'view' ) {
+		return $this->get_prop( 'reschedule_limit_unit', $context );
+	}
+
+	/**
+	 * Set reschedule_limit_unit.
+	 *
+	 * @param string $value
+	 */
+	public function set_reschedule_limit_unit( $value ) {
+		$value = in_array( $value, array( 'month', 'day', 'hour', 'minute' ) ) ? $value : 'day';
+		$this->set_prop( 'reschedule_limit_unit', $value );
+	}
+
+	/**
+	 * Get reschedule_limit.
+	 *
+	 * @param  string $context
+	 * @return integer
+	 */
+	public function get_reschedule_limit( $context = 'view' ) {
+		return $this->get_prop( 'reschedule_limit', $context );
+	}
+
+	/**
+	 * Set reschedule_limit.
+	 *
+	 * @param integer $value
+	 */
+	public function set_reschedule_limit( $value ) {
+		$this->set_prop( 'reschedule_limit', max( 1, absint( $value ) ) );
 	}
 
 	/**
@@ -1071,6 +1132,15 @@ class WC_Product_Appointment extends WC_Product_Appointment_Compatibility {
 	}
 
 	/**
+	 * See if the appointment can be rescheduled.
+	 *
+	 * @return boolean
+	 */
+	public function can_be_rescheduled() {
+		return apply_filters( 'woocommerce_appointment_user_can_reschedule', $this->get_user_can_reschedule(), $this );
+	}
+
+	/**
 	 * See if the appointment has timezones.
 	 *
 	 * @return boolean
@@ -1246,7 +1316,7 @@ class WC_Product_Appointment extends WC_Product_Appointment_Compatibility {
 					$staff_qty = $this->is_staff_assignment_type( 'all' ) ? max( $staff_qtys ) : array_sum( $staff_qtys );
 				}
 			} elseif ( $staff_id && is_numeric( $staff_id ) ) {
-				$staff_qty = isset( $qtys[ $staff_id ] ) && '' !== $qtys[ $staff_id ] && 0 !== $qtys[ $staff_id ]  ? $qtys[ $staff_id ] : $default_qty;
+				$staff_qty = isset( $qtys[ $staff_id ] ) && '' !== $qtys[ $staff_id ] && 0 !== $qtys[ $staff_id ] ? $qtys[ $staff_id ] : $default_qty;
 			} elseif ( ! $staff_id ) {
 				foreach ( $this->get_staff_ids() as $staff_member_id ) {
 					$staff_qtys[] = isset( $qtys[ $staff_member_id ] ) && '' !== $qtys[ $staff_member_id ] && 0 !== $qtys[ $staff_member_id ] ? $qtys[ $staff_member_id ] : $this->get_qty();
@@ -1316,12 +1386,10 @@ class WC_Product_Appointment extends WC_Product_Appointment_Compatibility {
 
 			// Get availability of each staff - no staff has been chosen yet.
 			if ( $this->has_staff() && ! $for_staff ) {
-
 				// All slots are available.
 				if ( $this->get_default_availability() ) {
 					# If all slotss are available by default, we should not hide days if we don't know which staff is going to be used.
 				} else {
-
 					// Staff rules.
 					$staff_rules = WC_Appointments_Availability_Data_Store::get_staff_availability( $this->get_staff_ids() );
 					#print '<pre>'; print_r( $staff_rules ); print '</pre>';
@@ -1369,7 +1437,7 @@ class WC_Product_Appointment extends WC_Product_Appointment_Compatibility {
 	 * @return string|WP_Error
 	 */
 	public function get_slots_availability( $start_date, $end_date, $qty, $staff_id, $intervals = array(), $appointments = array() ) {
-		$slots              = $this->get_slots_in_range( $start_date, $end_date, $intervals, $staff_id );
+		$slots              = $this->get_slots_in_range( $start_date, $end_date, $intervals, $staff_id, array(), false, false );
 		$interval           = $this->get_duration_in_minutes();
 		$padding_in_seconds = 0;
 
@@ -1467,8 +1535,8 @@ class WC_Product_Appointment extends WC_Product_Appointment_Compatibility {
 							/* translators: %1$d: available quantity %2$s: appointment slot date %3$s: appointment slot time */
 							_n( 'There is a maximum of %1$d place remaining on %2$s at %3$s.', 'There are a maximum of %1$d places remaining on %2$s at %3$s.', $available_qty, 'woocommerce-appointments' ),
 							max( $available_qty, 0 ),
-							date_i18n( wc_date_format(), $slot ),
-							date_i18n( wc_time_format(), $start_date )
+							date_i18n( wc_appointments_date_format(), $slot ),
+							date_i18n( wc_appointments_time_format(), $slot )
 						)
 					);
 				} elseif ( ! $available_qtys ) {
@@ -1478,7 +1546,7 @@ class WC_Product_Appointment extends WC_Product_Appointment_Compatibility {
 							/* translators: %1$d: available quantity %2$s: appointment slot date */
 							_n( 'There is a maximum of %1$d place remaining on %2$s', 'There are a maximum of %1$d places remaining on %2$s', $available_qty, 'woocommerce-appointments' ),
 							$available_qty,
-							date_i18n( wc_date_format(), $slot )
+							date_i18n( wc_appointments_date_format(), $slot )
 						)
 					);
 				} else {
@@ -1488,7 +1556,7 @@ class WC_Product_Appointment extends WC_Product_Appointment_Compatibility {
 							/* translators: %1$d: available quantity %2$s: appointment slot date */
 							_n( 'There is a maximum of %1$d place remaining on %2$s', 'There are a maximum of %1$d places remaining on %2$s', $available_qty, 'woocommerce-appointments' ),
 							max( $available_qtys ),
-							date_i18n( wc_date_format(), $slot )
+							date_i18n( wc_appointments_date_format(), $slot )
 						)
 					);
 				}
@@ -1520,20 +1588,22 @@ class WC_Product_Appointment extends WC_Product_Appointment_Compatibility {
 	 *
 	 * @return array
 	 */
-	public function get_slots_in_range( $start_date, $end_date, $intervals = array(), $staff_id = 0, $scheduled = array(), $get_past_times = false ) {
+	public function get_slots_in_range( $start_date, $end_date, $intervals = array(), $staff_id = 0, $scheduled = array(), $get_past_times = false, $timezone_span = true ) {
 		$intervals = empty( $intervals ) ? $this->get_intervals() : $intervals;
 
 		// Span 1 day before and after to account for all timezones.
-		$start_date = strtotime( '-1 day', $start_date );
-		$end_date   = strtotime( '+1 day', $end_date );
+		if ( $timezone_span ) {
+			$start_date = strtotime( '-1 day', $start_date );
+			$end_date   = strtotime( '+1 day', $end_date );
+		}
 
 		#print '<pre>'; print_r( debug_backtrace() ); print '</pre>';
 		#print '<pre>'; print_r( date( 'Y-n-j H:i', $start_date ) .'___'. date( 'Y-n-j H:i', $end_date ) ); print '</pre>';
 		#print '<pre>'; print_r( $staff_id ); print '</pre>';
 
 		if ( $this->has_staff() && 0 === $staff_id ) {
-			$staff_ids       = $this->get_staff_ids();
-			$slots_in_range   = array();
+			$staff_ids      = $this->get_staff_ids();
+			$slots_in_range = array();
 
 			foreach ( $staff_ids as $staff_id ) {
 				if ( 'day' === $this->get_duration_unit() ) {
@@ -1543,6 +1613,9 @@ class WC_Product_Appointment extends WC_Product_Appointment_Compatibility {
 				} else {
 					$slots_in_range_a = $this->get_slots_in_range_for_hour_or_minutes( $start_date, $end_date, $intervals, $staff_id, $scheduled, $get_past_times );
 				}
+
+				#print '<pre>'; print_r( $staff_id ); print '</pre>';
+				#print '<pre>'; print_r( $slots_in_range ); print '</pre>';
 
 				$slots_in_range = array_merge( $slots_in_range_a, $slots_in_range );
 			}
@@ -1555,6 +1628,8 @@ class WC_Product_Appointment extends WC_Product_Appointment_Compatibility {
 				$slots_in_range = $this->get_slots_in_range_for_hour_or_minutes( $start_date, $end_date, $intervals, $staff_id, $scheduled, $get_past_times );
 			}
 		}
+
+		#print '<pre>'; print_r( $slots_in_range ); print '</pre>';
 
 		asort( $slots_in_range ); #sort ascending by value so latest time goes at the end
 
@@ -1830,6 +1905,9 @@ class WC_Product_Appointment extends WC_Product_Appointment_Compatibility {
 		$product_min_date = $this->get_min_date_a();
 		$product_max_date = $this->get_max_date_a();
 
+		#print '<pre>'; print_r( $product_min_date ); print '</pre>';
+		#print '<pre>'; print_r( $product_max_date ); print '</pre>';
+
 		$min_check_from = strtotime( "+{$product_min_date['value']} {$product_min_date['unit']}", current_time( 'timestamp' ) );
 		$max_check_to   = strtotime( "+{$product_max_date['value']} {$product_max_date['unit']}", current_time( 'timestamp' ) );
 		$min_date       = $this->get_min_timestamp_for_date( $start_date, $product_min_date['value'], $product_min_date['unit'] );
@@ -1889,9 +1967,9 @@ class WC_Product_Appointment extends WC_Product_Appointment_Compatibility {
 				#print '<pre>'; print_r( '$etime: ' . date('Y-n-j H:i', $end_time) ); print '</pre>';
 
 				// Remove 00:00 or 24:00 for same day slot.
-				if ( strtotime( 'midnight +1 day', $start_date ) === $start_time ) {
+				#if ( strtotime( 'midnight +1 day', $start_date ) === $start_time ) {
 					#continue;
-				}
+				#}
 
 				// Available quantity.
 				$available_qty = WC_Product_Appointment_Rule_Manager::check_availability_rules_against_time( $this, $start_time, $end_time, $staff_id, 1 );
@@ -1915,15 +1993,19 @@ class WC_Product_Appointment extends WC_Product_Appointment_Compatibility {
 					continue;
 				}
 
+				/*
+				// Disabled with 4.10.0.
 				// Skip if start minutes not available.
 				if ( isset( $minutes_not_available[ $start_time ] )
+				    && ! $this->is_staff_assignment_type( 'all' )
 				    && $minutes_not_available[ $start_time ] >= $available_qty ) {
 					continue;
 				}
 
 				// Skip if any minute is not available.
 				// Not when checking availability against starting slot only.
-				if ( 'start' !== $this->get_availability_span() ) {
+				if ( 'start' !== $this->get_availability_span()
+			        && ! $this->is_staff_assignment_type( 'all' ) ) {
 					$interval_not_appointable = false;
 					// Check if any minute of slot is not within not available minutes.
 					for ( $t = $start_time; $t < $end_time; $t += 60 ) {
@@ -1937,6 +2019,7 @@ class WC_Product_Appointment extends WC_Product_Appointment_Compatibility {
 						continue;
 					}
 				}
+				*/
 
 				// Make sure minute & hour slots are not past minimum & max appointment settings.
 				if ( ( $start_time < $min_check_from || $end_time < $min_check_from || $start_time > $max_check_to ) && ! $get_past_times ) {
@@ -2124,45 +2207,52 @@ class WC_Product_Appointment extends WC_Product_Appointment_Compatibility {
  			// Test
  			$test = array();
  			foreach ( $available_times as $available_time ) {
- 				$test[] = date( 'y-m-d H:i', $available_time );
+ 				$test[] = date( 'Y-m-d H:i', $available_time );
  			}
  			print '<pre>'; print_r( $test ); print '</pre>';
 			*/
 
  			if ( $this->has_staff() ) {
 
+				// Build staff times array.
+				$staff_times = array();
+
 				// Loop through all staff in array.
-				if ( ! empty( $staff_scheduled ) && is_array( $product_staff ) ) {
-					foreach ( $staff_scheduled as $staff_scheduled_id => $staff_scheduled_times ) {
-						if ( ! empty( $staff_scheduled_times ) && in_array( $staff_scheduled_id, $product_staff ) ) {
-							foreach ( $staff_scheduled_times as $staff_scheduled_time ) {
-								$staff_scheduled_found[] = $staff_scheduled_time;
-							}
-						}
+				if ( ! empty( $staff_scheduled ) && is_array( $product_staff )  ) {
+					foreach ( $product_staff as $product_staff_id ) {
+						$staff_appointments = isset( $staff_scheduled[ $product_staff_id ] ) ? $staff_scheduled[ $product_staff_id ] : array();
+						$staff_times_a      = $this->get_slots_in_range( $start_date, $end_date, array( $interval, $base_interval ), $product_staff_id, $staff_appointments );
+						#print '<pre>'; print_r( $staff_times_a ); print '</pre>';
+						$staff_times = array_merge( $staff_times_a, $staff_times );
 					}
+					#print '<pre>'; print_r( $staff_times ); print '</pre>';
+
 				// Single staff.
 				} elseif ( isset( $staff_scheduled[ $staff_id ] ) && ! empty( $staff_scheduled[ $staff_id ] ) ) {
-					foreach ( $staff_scheduled[ $staff_id ] as $staff_scheduled_time ) {
-						$staff_scheduled_found[] = $staff_scheduled_time;
-					}
+					$staff_appointments = isset( $staff_scheduled[ $staff_id ] ) ? $staff_scheduled[ $staff_id ] : array();
+					$staff_times        = $this->get_slots_in_range( $start_date, $end_date, array( $interval, $base_interval ), $staff_id, $staff_appointments );
+					#print '<pre>'; print_r( $staff_times ); print '</pre>';
+
+				// When scheduling outside of staff scope.
+				} elseif ( isset( $staff_scheduled[0] ) ) {
+					$staff_appointments = isset( $staff_scheduled[0] ) ? $staff_scheduled[0] : array();
+					$staff_times        = $this->get_slots_in_range( $start_date, $end_date, array( $interval, $base_interval ), $staff_id, $staff_appointments );
+					#print '<pre>'; print_r( $staff_times ); print '</pre>';
+				// Everything else.
+				} else {
+					$staff_times = $this->get_slots_in_range( $start_date, $end_date, array( $interval, $base_interval ), $staff_id, array() );
+					#print '<pre>'; print_r( $staff_times ); print '</pre>';
 				}
+				#print '<pre>'; print_r( $staff_times ); print '</pre>';
 
- 				// Default to all staff if no staff ID is scheduled.
- 				if ( isset( $staff_scheduled_found ) ) {
- 					$staff_scheduled = $staff_scheduled_found;
- 				} else {
- 					$staff_scheduled = $staff_scheduled[0];
- 				}
-
- 				// Get slots in range.
- 				$times = $this->get_slots_in_range( $start_date, $end_date, array( $interval, $base_interval ), $staff_id, $staff_scheduled );
 				// No preference selected.
 				if ( ! $staff_id ) {
-					$available_times = array_merge( $available_times, $times ); #add times from staff to times from product
+					$available_times = array_merge( $available_times, $staff_times ); #add times from staff to times from product
 				// Staff selected.
 				} else {
-					$available_times = array_intersect( $available_times, $times ); #merge times from staff that are also available in product
+					$available_times = array_intersect( $available_times, $staff_times ); #merge times from staff that are also available in product
 				}
+				#print '<pre>'; print_r( $available_times ); print '</pre>';
  			}
 
  			/*
@@ -2171,7 +2261,7 @@ class WC_Product_Appointment extends WC_Product_Appointment_Compatibility {
  			foreach ( $available_times as $available_slot ) {
  				$test2[] = date( 'y-m-d H:i', $available_slot );
  			}
- 			var_dump( $test2 );
+			print '<pre>'; print_r( $test2 ); print '</pre>';
  			*/
  		}
 
@@ -2379,7 +2469,7 @@ class WC_Product_Appointment extends WC_Product_Appointment_Compatibility {
 
 			if ( strtotime( $data['_date'] . ' ' . $data['_time'] ) < $min_date ) {
 				/* translators: %s: minimum date */
-				return new WP_Error( 'Error', sprintf( __( 'The earliest appointment possible is currently %s.', 'woocommerce-appointments' ), date_i18n( wc_date_format() . ' ' . wc_time_format(), $min_date ) ) );
+				return new WP_Error( 'Error', sprintf( __( 'The earliest appointment possible is currently %s.', 'woocommerce-appointments' ), date_i18n( wc_appointments_date_format() . ' ' . wc_appointments_time_format(), $min_date ) ) );
 			}
 		}
 
@@ -2388,7 +2478,7 @@ class WC_Product_Appointment extends WC_Product_Appointment_Compatibility {
 			$max_date = strtotime( "+{$max['value']} {$max['unit']}", $now );
 			if ( strtotime( $data['_date'] . ' ' . $data['_time'] ) > $max_date ) {
 				/* translators: %s: maximum date */
-				return new WP_Error( 'Error', sprintf( __( 'The latest appointment possible is currently %s.', 'woocommerce-appointments' ), date_i18n( wc_date_format() . ' ' . wc_time_format(), $max_date ) ) );
+				return new WP_Error( 'Error', sprintf( __( 'The latest appointment possible is currently %s.', 'woocommerce-appointments' ), date_i18n( wc_appointments_date_format() . ' ' . wc_appointments_time_format(), $max_date ) ) );
 			}
 		}
 
@@ -2557,6 +2647,7 @@ class WC_Product_Appointment extends WC_Product_Appointment_Compatibility {
 					foreach ( $appointment_staff as $appointment_staff_id ) {
 						// Only include if it is available for this selection.
 						if ( ! WC_Product_Appointment_Rule_Manager::check_availability_rules_against_date( $this, $slot, $appointment_staff_id ) ) {
+							$staff[ $appointment_staff_id ] = 0;
 							continue;
 						}
 
@@ -2565,6 +2656,7 @@ class WC_Product_Appointment extends WC_Product_Appointment_Compatibility {
 							$check_rules_against_time = WC_Product_Appointment_Rule_Manager::check_availability_rules_against_time( $this, $slot, strtotime( "+{$interval} minutes", $slot ), $appointment_staff_id, true );
 
 							if ( ! $check_rules_against_time || 0 === $check_rules_against_time ) {
+								$staff[ $appointment_staff_id ] = 0;
 								continue;
 							}
 
@@ -2588,6 +2680,7 @@ class WC_Product_Appointment extends WC_Product_Appointment_Compatibility {
 					// Get qty based on duration unit.
 					$check_rules_against_time = WC_Product_Appointment_Rule_Manager::check_availability_rules_against_time( $this, $slot, strtotime( "+{$interval} minutes", $slot ), $appointment_staff, true );
 					if ( ! $check_rules_against_time || 0 === $check_rules_against_time ) {
+						$staff[ $appointment_staff ] = 0;
 						continue;
 					}
 
@@ -2671,7 +2764,7 @@ class WC_Product_Appointment extends WC_Product_Appointment_Compatibility {
 									if ( $appointment['get_product_id'] !== $product_id && apply_filters( 'wc_apointments_check_appointment_product', true, $appointment['get_id'], $product_id ) ) {
 										$qty_to_add = $this->get_available_qty( $existing_staff_id );
 									}
-									$qty_to_add = apply_filters( 'wc_apointments_check_appointment_qty', $qty_to_add, $appointment, $this );
+									$qty_to_add                      = apply_filters( 'wc_apointments_check_appointment_qty', $qty_to_add, $appointment, $this );
 									$qty_scheduled_for_staff[]       = $qty_to_add;
 									$existing_staff_id_qty_scheduled = ( isset( $staff[ $existing_staff_id ] ) ? $staff[ $existing_staff_id ] : 0 ) - $qty_to_add;
 									$staff[ $existing_staff_id ]     = max( $existing_staff_id_qty_scheduled, 0 ); #when negative, turn to zero.
@@ -2688,7 +2781,7 @@ class WC_Product_Appointment extends WC_Product_Appointment_Compatibility {
 									if ( $appointment['get_product_id'] !== $product_id && apply_filters( 'wc_apointments_check_appointment_product', true, $appointment['get_id'], $product_id ) ) {
 										$qty_to_add = $this->get_available_qty( $existing_staff_id );
 									}
-									$qty_to_add = apply_filters( 'wc_apointments_check_appointment_qty', $qty_to_add, $appointment, $this );
+									$qty_to_add                      = apply_filters( 'wc_apointments_check_appointment_qty', $qty_to_add, $appointment, $this );
 									$qty_scheduled_for_staff[]       = $qty_to_add;
 									$existing_staff_id_qty_scheduled = ( isset( $staff[ $existing_staff_id ] ) ? $staff[ $existing_staff_id ] : 0 ) - $qty_to_add;
 									$staff[ $existing_staff_id ]     = max( $existing_staff_id_qty_scheduled, 0 ); #when negative, turn to zero.
@@ -2821,8 +2914,8 @@ class WC_Product_Appointment extends WC_Product_Appointment_Compatibility {
 
 			// Timezones.
 			$timezone_datetime = new DateTime();
-			$local_time        = $this->has_timezones() ? wc_appointment_timezone_locale( 'site', 'user', $timezone_datetime->getTimestamp(), wc_time_format(), $timezone ) : '';
-			$site_time         = $this->has_timezones() ? wc_appointment_timezone_locale( 'site', 'user', $timezone_datetime->getTimestamp(), wc_time_format(), wc_timezone_string() ) : '';
+			$local_time        = $this->has_timezones() ? wc_appointment_timezone_locale( 'site', 'user', $timezone_datetime->getTimestamp(), wc_appointments_time_format(), $timezone ) : '';
+			$site_time         = $this->has_timezones() ? wc_appointment_timezone_locale( 'site', 'user', $timezone_datetime->getTimestamp(), wc_appointments_time_format(), wc_timezone_string() ) : '';
 
 			#print '<pre>'; print_r( $timezone ); print '</pre>';
 			#print '<pre>'; print_r( $local_time ); print '</pre>';
@@ -2861,9 +2954,12 @@ class WC_Product_Appointment extends WC_Product_Appointment_Compatibility {
 					$local_slot   = $this->has_timezones() ? wc_appointment_timezone_locale( 'site', 'user', $slot, 'U', $timezone ) : $slot;
 					$display_slot = ( $this->has_timezones() && $local_time !== $site_time ) ? $local_slot : $slot;
 
+					/*
+					// Used for testing.
 					if ( '23:00' === date_i18n( 'H:i', $local_slot ) ) {
-						#print '<pre>'; print_r( date_i18n( 'Y.m.d H:i', $slot ) . ' -- ' . date_i18n( 'Y.m.d H:i', $local_slot ) ); print '</pre>';
+						print '<pre>'; print_r( date_i18n( 'Y.m.d H:i', $slot ) . ' -- ' . date_i18n( 'Y.m.d H:i', $local_slot ) ); print '</pre>';
 					}
+					*/
 
 					// Skip dates that are from different days (used for timezones).
 					if ( date( 'Y.m.d', $timestamp ) !== date_i18n( 'Y.m.d', $local_slot ) ) {
@@ -2905,9 +3001,9 @@ class WC_Product_Appointment extends WC_Product_Appointment_Compatibility {
 						if ( $quantity_available > 0 ) {
 							if ( $quantity['scheduled'] ) {
 								/* translators: %d: quantity */
-				 				$slot_html = "<li class=\"slot$selected\" data-slot=\"" . esc_attr( date( 'Hi', $display_slot ) ) . "\" data-remaining=\"" . esc_attr( $quantity['available'] ) . "\"><a href=\"#\" data-value=\"" . date_i18n( 'G:i', $display_slot ) . "\">" . date_i18n( wc_time_format(), $display_slot ) . " <small class=\"spaces-left\">" . $spaces_left . "</small></a></li>";
+				 				$slot_html = "<li class=\"slot$selected\" data-slot=\"" . esc_attr( date( 'Hi', $display_slot ) ) . "\" data-remaining=\"" . esc_attr( $quantity['available'] ) . "\"><a href=\"#\" data-value=\"" . date_i18n( 'G:i', $display_slot ) . "\">" . date_i18n( wc_appointments_time_format(), $display_slot ) . " <small class=\"spaces-left\">" . $spaces_left . "</small></a></li>";
 				 			} else {
-				 				$slot_html = "<li class=\"slot$selected\" data-slot=\"" . esc_attr( date( 'Hi', $display_slot ) ) . "\" data-remaining=\"" . esc_attr( $quantity['available'] ) . "\"><a href=\"#\" data-value=\"" . date_i18n( 'G:i', $display_slot ) . "\">" . date_i18n( wc_time_format(), $display_slot ) . "</a></li>";
+				 				$slot_html = "<li class=\"slot$selected\" data-slot=\"" . esc_attr( date( 'Hi', $display_slot ) ) . "\" data-remaining=\"" . esc_attr( $quantity['available'] ) . "\"><a href=\"#\" data-value=\"" . date_i18n( 'G:i', $display_slot ) . "\">" . date_i18n( wc_appointments_time_format(), $display_slot ) . "</a></li>";
 				 			}
 							$slots_html .= apply_filters( 'woocommerce_appointments_time_slot_html', $slot_html, $display_slot, $quantity, $time_to_check, $staff_id, $timezone, $this, $spaces_left, $appointments );
 				 		} else {

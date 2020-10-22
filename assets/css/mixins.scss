@@ -240,6 +240,7 @@
 		span {
 			box-shadow: none;
 			display: block;
+			text-decoration: none;
 		}
 	}
 	td .ui-state-default {
@@ -276,6 +277,7 @@
 		background-image: none;
 		border: 0;
 		border-radius: 0;
+		font-weight: 700;
 		overflow: hidden;
 		padding: 0;
 		position: relative;
@@ -378,12 +380,22 @@
 	select.ui-datepicker-month,
 	select.ui-datepicker-year {
 		display: inline-block;
+		width: 45%;
 	}
 
 	.ui-datepicker-buttonpane {
 		border-top: 1px solid #ddd;
+		margin: .7em 0 0 0;
+		padding: 0 .2em;
 		button {
 			background: #f7f7f7;
+			border: 1px solid #d3d3d3;
+			float: right;
+			margin: .5em .2em .4em;
+			padding: .2em .6em .3em .6em;
+			&.ui-datepicker-current {
+				float: left;
+			}
 		}
 	}
 }

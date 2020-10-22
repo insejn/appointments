@@ -59,6 +59,9 @@ class WC_Appointments_Admin_Product_Export_Import {
 			'user_can_cancel'         => 'User can cancel option',
 			'cancel_limit_unit'       => 'Cancel limit unit',
 			'cancel_limit'            => 'Cancel limit',
+			'user_can_reschedule'     => 'User can reschedule option',
+			'reschedule_limit_unit'   => 'Reschedule limit unit',
+			'reschedule_limit'        => 'Reschedule limit',
 			'cal_color'               => 'Calendar color',
 			'requires_confirmation'   => 'Requires confirmation option',
 			'availability_span'       => 'Availability span selection',
@@ -93,7 +96,7 @@ class WC_Appointments_Admin_Product_Export_Import {
 	/**
 	 * Export all fields with arrays as json encoded strings.
 	 *
-	 ** @since 4.8.19
+	 * @since 4.8.19
 	 *
 	 * @param WC_Product $product Product being exported.
 	 * @param array      $row     Row being exported.

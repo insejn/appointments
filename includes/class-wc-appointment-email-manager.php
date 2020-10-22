@@ -84,10 +84,8 @@ class WC_Appointment_Email_Manager {
 
 				// Order contains appointments.
 				if ( $appointment_ids ) {
-					foreach ( $appointment_ids as $appointment_id ) {
-						$appointment   = get_wc_appointment( $appointment_id );
-						$attachments[] = $generate->get_appointment_ics( $appointment );
-					}
+					$appointment_objects = array_map( 'get_wc_appointment', $appointment_ids );
+					$attachments[]       = $generate->get_ics( $appointment_objects );
 				}
 			// Email object is for single WC_Appointment.
 			} elseif ( is_a( $object, 'WC_Appointment' ) ) {
@@ -140,6 +138,7 @@ class WC_Appointment_Email_Manager {
 				'woocommerce_appointment_pending-confirmation_to_cancelled',
 				'woocommerce_appointment_confirmed_to_cancelled',
 				'woocommerce_appointment_paid_to_cancelled',
+				'woocommerce_appointment_unpaid_to_cancelled',
 			)
 		);
 

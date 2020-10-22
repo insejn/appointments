@@ -3,12 +3,12 @@
  * Plugin Name: WooCommerce Product Add-ons
  * Plugin URI: https://woocommerce.com/products/product-add-ons/
  * Description: Add extra options to products which your customers can select from, when adding to the cart, with an optional fee for each extra option. Add-ons can be checkboxes, a select box, or custom text input.
- * Version: 3.0.33
+ * Version: 3.1.0
  * Author: WooCommerce
  * Author URI: https://woocommerce.com
  * Requires at least: 3.8
- * Tested up to: 5.4
- * WC tested up to: 4.1
+ * Tested up to: 5.5
+ * WC tested up to: 4.5
  * WC requires at least: 2.6
  * Text Domain: woocommerce-product-addons
  * Domain Path: /languages/
@@ -22,13 +22,13 @@ defined( 'ABSPATH' ) || exit;
 
 // phpcs:disable WordPress.Files.FileName
 
-add_action( 'init', 'woocommerce_product_addons_init', 99 );
-
-function woocommerce_product_addons_init() {
+// Start here when no conflict detected.
+add_action( 'init', 'woocommerce_appointments_product_addons_init', 99 );
+function woocommerce_appointments_product_addons_init() {
 
 	if ( is_woocommerce_active() && ! class_exists( 'WC_Product_Addons' ) ) :
 
-		define( 'WC_PRODUCT_ADDONS_VERSION', '3.0.33' );
+		define( 'WC_PRODUCT_ADDONS_VERSION', '3.1.0' );
 		define( 'WC_PRODUCT_ADDONS_MAIN_FILE', __FILE__ );
 		define( 'WC_PRODUCT_ADDONS_PLUGIN_URL', WC_APPOINTMENTS_PLUGIN_URL . '/includes/integrations/woocommerce-product-addons' );
 		define( 'WC_PRODUCT_ADDONS_PLUGIN_PATH', WC_APPOINTMENTS_ABSPATH . 'includes/integrations/woocommerce-product-addons' );

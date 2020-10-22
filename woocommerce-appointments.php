@@ -3,11 +3,11 @@
  * Plugin Name: WooCommerce Appointments
  * Plugin URI: https://bookingwp.com/plugins/woocommerce-appointments/
  * Description: Setup appointable products for WooCommerce
- * Version: 4.9.5
- * Tested up to: 5.4
+ * Version: 4.10.2
+ * Tested up to: 5.6
  * Requires at least: 4.2
- * WC tested up to: 4.2
- * WC requires at least: 3.0
+ * WC tested up to: 4.6
+ * WC requires at least: 3.1
  * Author: BookingWP
  * Author URI: https://bookingwp.com
  *
@@ -51,7 +51,7 @@ function woocommerce_appointments_activate() {
 }
 
 if ( ! class_exists( 'WC_Appointments' ) ) :
-	define( 'WC_APPOINTMENTS_VERSION', '4.9.5' ); // WRCS: DEFINED_VERSION.
+	define( 'WC_APPOINTMENTS_VERSION', '4.10.2' ); // WRCS: DEFINED_VERSION.
 	define( 'WC_APPOINTMENTS_TEMPLATE_PATH', untrailingslashit( plugin_dir_path( __FILE__ ) ) . '/templates/' );
 	define( 'WC_APPOINTMENTS_PLUGIN_URL', untrailingslashit( plugins_url( basename( plugin_dir_path( __FILE__ ) ), basename( __FILE__ ) ) ) );
 	define( 'WC_APPOINTMENTS_MAIN_FILE', __FILE__ );
@@ -289,6 +289,10 @@ if ( ! class_exists( 'WC_Appointments' ) ) :
 
 			if ( class_exists( 'Kadence_Woomail_Designer' ) ) {
 				include_once WC_APPOINTMENTS_ABSPATH . 'includes/integrations/class-wc-appointments-integration-kadence-woomail.php';
+			}
+
+			if ( class_exists( 'WC_Box_Office' ) ) {
+				include_once WC_APPOINTMENTS_ABSPATH . 'includes/integrations/class-wc-appointments-integration-wc-box-office.php';
 			}
 
 			// Privacy.

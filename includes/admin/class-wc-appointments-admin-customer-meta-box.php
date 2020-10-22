@@ -65,7 +65,7 @@ class WC_Appointments_Admin_Customer_Meta_Box {
  		<table class="appointment-customer-details">
  			<?php
 			$appointment_customer = $appointment->get_customer();
-			//print '<pre>'; print_r( $appointment_customer ); print '</pre>';
+			#print '<pre>'; print_r( $appointment_customer ); print '</pre>';
 			?>
 			<tr>
 				<th><?php esc_html_e( 'Name:', 'woocommerce-appointments' ); ?></th>

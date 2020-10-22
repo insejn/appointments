@@ -117,7 +117,7 @@ class WC_Appointments_Admin_Staff_Profile {
 							if ( $last_synced ) {
 								$ls_timestamp = isset( $last_synced[0] ) && $last_synced[0] ? absint( $last_synced[0] ) : absint( current_time( 'timestamp' ) );
 								/* translators: '%1$s: date format, '%2$s: time format */
-								$ls_message = sprintf( __( '%1$s, %2$s', 'woocommerce-appointments' ), date_i18n( wc_date_format(), $ls_timestamp ), date_i18n( wc_time_format(), $ls_timestamp ) );
+								$ls_message = sprintf( __( '%1$s, %2$s', 'woocommerce-appointments' ), date_i18n( wc_appointments_date_format(), $ls_timestamp ), date_i18n( wc_appointments_time_format(), $ls_timestamp ) );
 							?>
 								<p class="last_synced"><?php echo esc_attr( $ls_message ); ?></p>
 							<?php } else { ?>
@@ -177,7 +177,7 @@ class WC_Appointments_Admin_Staff_Profile {
 
 		$staff_availabilities = WC_Data_Store::load( 'appointments-availability' )->get_all( $availability_args );
 		#print '<pre>'; print_r( $staff_availabilities ); print '</pre>';
-		$show_title           = true;
+		$show_title = true;
 		?>
 		<table class="form-table">
 			<tr class="staff-availability">
@@ -583,7 +583,7 @@ class WC_Appointments_Admin_Staff_Profile {
 		// Check roles if user is shop staff.
 		if ( in_array( 'shop_staff', (array) $user_meta->roles ) ) {
 			// Get all staff appointments and remove staff from them.
-			$appointments_args = array(
+			$appointments_args  = array(
 				'status'      => get_wc_appointment_statuses( 'validate' ),
 				'object_id'   => absint( $user_id ),
 				'object_type' => 'staff',
@@ -610,7 +610,7 @@ class WC_Appointments_Admin_Staff_Profile {
 				'object_id'   => absint( $user_id ),
 				'object_type' => 'customer',
 			);
-			$customer_appointments = WC_Appointment_Data_Store::get_appointment_ids_by( $customer_appointments_args );
+			$customer_appointments      = WC_Appointment_Data_Store::get_appointment_ids_by( $customer_appointments_args );
 			if ( ! empty( $customer_appointments ) ) {
 				foreach ( $customer_appointments as $customer_appointment ) {
 					delete_post_meta( $customer_appointment->id, '_appointment_customer_id' );

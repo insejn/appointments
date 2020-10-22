@@ -175,6 +175,10 @@ class WC_Email_Admin_New_Appointment extends WC_Email {
 			// Check if provided $appointment_id is indeed an $appointment.
 			$this->object = wc_appointments_maybe_appointment_object( $appointment );
 
+			if ( ! $this->object ) {
+				return;
+			}
+
 			if ( $this->object->has_status( 'in-cart' ) ) {
 				return;
 			}
@@ -196,7 +200,7 @@ class WC_Email_Admin_New_Appointment extends WC_Email {
 				$this->placeholders['{order_date}']   = wc_format_datetime( $order_date );
 				$this->placeholders['{order_number}'] = $this->object->get_order()->get_order_number();
 			} else {
-				$this->placeholders['{order_date}']   = date_i18n( wc_date_format(), strtotime( $this->object->appointment_date ) );
+				$this->placeholders['{order_date}']   = date_i18n( wc_appointments_date_format(), strtotime( $this->object->appointment_date ) );
 				$this->placeholders['{order_number}'] = __( 'N/A', 'woocommerce-appointments' );
 			}
 
@@ -219,11 +223,11 @@ class WC_Email_Admin_New_Appointment extends WC_Email {
 		wc_get_template(
 			$this->template_html,
 			array(
-				'appointment'        => $this->object,
-				'email_heading'      => $this->get_heading(),
-				'sent_to_admin'      => false,
-				'plain_text'         => false,
-				'email'              => $this,
+				'appointment'   => $this->object,
+				'email_heading' => $this->get_heading(),
+				'sent_to_admin' => false,
+				'plain_text'    => false,
+				'email'         => $this,
 			),
 			'',
 			$this->template_base
@@ -243,11 +247,11 @@ class WC_Email_Admin_New_Appointment extends WC_Email {
 		wc_get_template(
 			$this->template_html,
 			array(
-				'appointment'        => $this->object,
-				'email_heading'      => $this->get_heading(),
-				'sent_to_admin'      => false,
-				'plain_text'         => false,
-				'email'              => $this,
+				'appointment'   => $this->object,
+				'email_heading' => $this->get_heading(),
+				'sent_to_admin' => false,
+				'plain_text'    => false,
+				'email'         => $this,
 			),
 			'',
 			$this->template_base

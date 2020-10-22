@@ -52,6 +52,8 @@ class WC_Product_Addons_Field_Select extends WC_Product_Addons_Field {
 			'price_type'    => $chosen_option['price_type'],
 			'duration'      => isset( $chosen_option['duration'] ) ? $chosen_option['duration'] : 0,
 			'duration_type' => isset( $chosen_option['duration_type'] ) ? $chosen_option['duration_type'] : '',
+			'hide_duration' => isset( $this->addon['wc_appointment_hide_duration_label'] ) && $this->addon['wc_appointment_hide_duration_label'] ? 1 : 0,
+			'hide_price'    => isset( $this->addon['wc_appointment_hide_price_label'] ) && $this->addon['wc_appointment_hide_price_label'] ? 1 : 0,
 		);
 
 		return $cart_item_data;

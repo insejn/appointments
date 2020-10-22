@@ -50,8 +50,6 @@ class WC_Appointment_Form_Datetime_Picker extends WC_Appointment_Form_Date_Picke
 			$this->args['interval'] = $this->args['interval'] * 60 * 24;
 		}
 
-		#print '<pre>'; print_r( $fully_scheduled_slots ); print '</pre>';
-
 		$this->args['default_date'] = date( 'Y-m-d', $this->get_default_date() );
 	}
 

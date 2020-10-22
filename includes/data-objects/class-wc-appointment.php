@@ -30,7 +30,7 @@ class WC_Appointment extends WC_Appointments_Data {
 		'staff_ids'                       => '',
 		'status'                          => 'unpaid',
 		'customer_status'                 => 'expected',
-		'qty'		    		          => 1,
+		'qty'                             => 1,
 		'timezone'                        => '',
 	);
 
@@ -122,10 +122,12 @@ class WC_Appointment extends WC_Appointments_Data {
 					$appointment['order_id'] = wc_get_order_id_by_order_item_id( $appointment['order_item_id'] );
 				} else {
 					global $wpdb;
-					$appointment['order_id'] = (int) $wpdb->get_var( $wpdb->prepare(
-						"SELECT order_id FROM {$wpdb->prefix}woocommerce_order_items WHERE order_item_id = %d",
-						$appointment['order_item_id']
-					) );
+					$appointment['order_id'] = (int) $wpdb->get_var(
+						$wpdb->prepare(
+							"SELECT order_id FROM {$wpdb->prefix}woocommerce_order_items WHERE order_item_id = %d",
+							$appointment['order_item_id']
+						)
+					);
 				}
 			}
 
@@ -140,6 +142,8 @@ class WC_Appointment extends WC_Appointments_Data {
 					$appointment['user_id'] = get_current_user_id();
 				}
 			}
+
+			#error_log( var_export( $appointment, true ) );
 
 			$this->set_props( $appointment );
 			$this->set_object_read( true );
@@ -208,12 +212,14 @@ class WC_Appointment extends WC_Appointments_Data {
 				'was-in-cart' => __( 'Was In Cart', 'woocommerce-appointments' ),
 			);
 
-			$allowed_statuses = array_unique( array_merge(
-				$allowed_statuses,
-				get_wc_appointment_statuses( null, true ),
-				get_wc_appointment_statuses( 'user', true ),
-				get_wc_appointment_statuses( 'cancel', true )
-			) );
+			$allowed_statuses = array_unique(
+				array_merge(
+					$allowed_statuses,
+					get_wc_appointment_statuses( null, true ),
+					get_wc_appointment_statuses( 'user', true ),
+					get_wc_appointment_statuses( 'cancel', true )
+				)
+			);
 
 			$from = ! empty( $allowed_statuses[ $this->status_transitioned['from'] ] )
 				? $allowed_statuses[ $this->status_transitioned['from'] ]
@@ -270,7 +276,10 @@ class WC_Appointment extends WC_Appointments_Data {
 	 * Handle the appointment changes.
 	 */
 	protected function appointment_changes( $get_changes = array() ) {
+		// Get order object.
 		$order = $this->get_order();
+
+		// Loop through changes.
 		foreach ( $get_changes as $change_key => $change_value ) {
 
 			// Product ID has changed.
@@ -360,7 +369,15 @@ class WC_Appointment extends WC_Appointments_Data {
 	 * @param integer $value
 	 */
 	public function set_customer_id( $value ) {
-		$this->set_prop( 'customer_id', absint( $value ) );
+		$new_customer_id = absint( $value );
+
+		// Add customer ID, when creating new account.
+		if ( 0 === $new_customer_id ) {
+			$customer        = $this->get_customer();
+			$new_customer_id = isset( $customer->user_id ) ? $customer->user_id : $new_customer_id;
+		}
+
+		$this->set_prop( 'customer_id', $new_customer_id );
 	}
 
 	/**
@@ -651,9 +668,9 @@ class WC_Appointment extends WC_Appointments_Data {
 	public function set_customer_status( $new_customer_status ) {
 		// Set status to "no-show", when appointment is past current time, is not paid and customer status is set to "expected".
 		if ( 'expected' === $this->get_customer_status()
-		   && ! $this->has_status( array( 'paid', 'complete' ) )
-		   && $this->get_start() < current_time( 'timestamp' )
-		   && $this->get_end() < current_time( 'timestamp' )
+		    && ! $this->has_status( array( 'paid', 'complete' ) )
+		    && $this->get_start() < current_time( 'timestamp' )
+		    && $this->get_end() < current_time( 'timestamp' )
 		) {
 			$new_customer_status = 'no-show';
 		}
@@ -776,6 +793,31 @@ class WC_Appointment extends WC_Appointments_Data {
 	}
 
 	/**
+	 * See if this appointment can still be rescheduled by the user or not.
+	 *
+	 * @return boolean
+	 */
+	public function passed_reschedule_day() {
+		$product = $this->get_product();
+
+		if ( ! $product || ! $product->can_be_rescheduled() ) {
+			return true;
+		}
+
+		if ( false !== $product ) {
+			$reschedule_limit      = $product->get_reschedule_limit();
+			$reschedule_limit_unit = $reschedule_limit > 1 ? $product->get_reschedule_limit_unit() . 's' : $product->get_reschedule_limit_unit();
+			$reschedule_string     = sprintf( '%s +%d %s', current_time( 'd F Y H:i:s' ), $reschedule_limit, $reschedule_limit_unit );
+
+			if ( strtotime( $reschedule_string ) >= $this->get_start() ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Returns if staff are enabled/needed for the appointment product
 	 *
 	 * @return boolean
@@ -819,10 +861,10 @@ class WC_Appointment extends WC_Appointments_Data {
 	public function get_start_date( $date_format = null, $time_format = null ) {
 		if ( $this->get_start() ) {
 			if ( is_null( $date_format ) ) {
-				$date_format = apply_filters( 'woocommerce_appointments_date_format', wc_date_format() );
+				$date_format = apply_filters( 'woocommerce_appointments_date_format', wc_appointments_date_format() );
 			}
 			if ( is_null( $time_format ) ) {
-				$time_format = apply_filters( 'woocommerce_appointments_time_format', ', ' . wc_time_format() );
+				$time_format = apply_filters( 'woocommerce_appointments_time_format', ', ' . wc_appointments_time_format() );
 			}
 			if ( $this->is_all_day() ) {
 				return date_i18n( $date_format, $this->get_start() );
@@ -846,7 +888,7 @@ class WC_Appointment extends WC_Appointments_Data {
 
 				// Timezone caluclation.
 				if ( $this->get_timezone() && in_array( current_filter(), $customers_viewpoints ) ) {
-					$start_date = wc_appointment_timezone_locale( 'site', 'user', $this->get_start(), 'U', $this->get_timezone() );
+					$start_date     = wc_appointment_timezone_locale( 'site', 'user', $this->get_start(), 'U', $this->get_timezone() );
 					$get_start_date = date_i18n( $date_format . $time_format, $start_date ) . ' (' . wc_appointment_get_timezone_name( $this->get_timezone() ) . ')';
 				} else {
 					$get_start_date = date_i18n( $date_format . $time_format, $this->get_start() );
@@ -869,10 +911,10 @@ class WC_Appointment extends WC_Appointments_Data {
 	public function get_end_date( $date_format = null, $time_format = null ) {
 		if ( $this->get_end() ) {
 			if ( is_null( $date_format ) ) {
-				$date_format = apply_filters( 'woocommerce_appointments_date_format', wc_date_format() );
+				$date_format = apply_filters( 'woocommerce_appointments_date_format', wc_appointments_date_format() );
 			}
 			if ( is_null( $time_format ) ) {
-				$time_format = apply_filters( 'woocommerce_appointments_time_format', ', ' . wc_time_format() );
+				$time_format = apply_filters( 'woocommerce_appointments_time_format', ', ' . wc_appointments_time_format() );
 			}
 			if ( $this->is_all_day() ) {
 				return date_i18n( $date_format, $this->get_end() );
@@ -896,7 +938,7 @@ class WC_Appointment extends WC_Appointments_Data {
 
 				// Timezone caluclation.
 				if ( $this->get_timezone() && in_array( current_filter(), $customers_viewpoints ) ) {
-					$end_date = wc_appointment_timezone_locale( 'site', 'user', $this->get_end(), 'U', $this->get_timezone() );
+					$end_date     = wc_appointment_timezone_locale( 'site', 'user', $this->get_end(), 'U', $this->get_timezone() );
 					$get_end_date = date_i18n( $date_format . $time_format, $end_date ) . ' (' . wc_appointment_get_timezone_name( $this->get_timezone() ) . ')';
 				} else {
 					$get_end_date = date_i18n( $date_format . $time_format, $this->get_end() );
@@ -920,6 +962,18 @@ class WC_Appointment extends WC_Appointments_Data {
 	}
 
 	/**
+	 * Returns appointment duration parameters.
+	 *
+	 * @param array $pretty
+	 *
+	 * @return string duration formatted as pretty timestamp
+	 */
+	public function get_duration_parameters() {
+		$duration_in_minutes = wc_appointment_duration_in_minutes( $this->get_start(), $this->get_end(), false );
+		return wc_appointment_duration_parameters( $duration_in_minutes );
+	}
+
+	/**
 	 * Returns appointment addons.
 	 *
 	 * @param array $args
@@ -927,14 +981,17 @@ class WC_Appointment extends WC_Appointments_Data {
 	 * @return string html formatted addon fields
 	 */
 	public function get_addons( $args = array() ) {
-		$args = wp_parse_args( $args, array(
-			'before'    => '<ul class="wc-item-meta"><li>',
-			'after'		=> '</li></ul>',
-			'separator'	=> '</li><li>',
-			'label'		=> true,
-			'echo'		=> false,
-			'autop'		=> true,
-		) );
+		$args = wp_parse_args(
+			$args,
+			array(
+				'before'    => '<ul class="wc-item-meta"><li>',
+				'after'     => '</li></ul>',
+				'separator' => '</li><li>',
+				'label'     => true,
+				'echo'      => false,
+				'autop'     => true,
+			)
+		);
 
 		if ( $this->has_status( array( 'was-in-cart', 'in-cart' ) ) ) {
 			$addons_from_cart = $this->get_addons_from_cart( $args );
@@ -978,9 +1035,9 @@ class WC_Appointment extends WC_Appointments_Data {
 					$appointment_ids = WC_Appointment_Data_Store::get_appointment_ids_from_order_item_id( $item_id );
 
 					if ( $product
-					  && is_wc_appointment_product( $product )
-					  && $this->get_product_id() === $product->get_id()
-					  && in_array( $this->get_id(), $appointment_ids )
+					    && is_wc_appointment_product( $product )
+					    && $this->get_product_id() === $product->get_id()
+					    && in_array( $this->get_id(), $appointment_ids )
 				    ) {
 						$item_meta = wc_display_item_meta( $item, $args );
 					}
@@ -1006,7 +1063,7 @@ class WC_Appointment extends WC_Appointments_Data {
 			WC()->session = new WC_Session_Handler();
 			WC()->session->init();
 			WC()->customer = new WC_Customer( get_current_user_id(), true );
-			WC()->cart = new WC_Cart();
+			WC()->cart     = new WC_Cart();
 		}
 
 		$strings = array();
@@ -1017,19 +1074,19 @@ class WC_Appointment extends WC_Appointments_Data {
 		        $product        = $cart_item['data'];
 
 		        if ( $product
-		          && is_wc_appointment_product( $product )
-		          && $this->get_product_id() === $product->get_id()
-		          && $this->get_id() === $appointment_id
-		          && isset( $cart_item['addons'] )
+		            && is_wc_appointment_product( $product )
+		            && $this->get_product_id() === $product->get_id()
+		            && $this->get_id() === $appointment_id
+		            && isset( $cart_item['addons'] )
 		        ) {
 		            foreach ( $cart_item['addons'] as $addon ) {
 		                $name = $addon['name'];
 
-		                if ( $addon['price'] > 0 && apply_filters( 'woocommerce_addons_add_price_to_name', true ) ) {
-		                    $name .= ' (' . strip_tags( wc_price(  WC_Product_Addons_Helper::get_product_addon_price_for_display( $addon['price'] ) ) ) . ')';
+		                if ( $addon['price'] > 0 && apply_filters( 'woocommerce_addons_add_price_to_name', true, $addon ) ) {
+		                    $name .= ' (' . wp_strip_all_tags( wc_price( WC_Product_Addons_Helper::get_product_addon_price_for_display( $addon['price'] ) ) ) . ')';
 		                }
 
-		                $value = $args['autop'] ? wp_kses_post( $addon['value'] ) : wp_kses_post( make_clickable( trim( strip_tags( $addon['value'] ) ) ) );
+		                $value = $args['autop'] ? wp_kses_post( $addon['value'] ) : wp_kses_post( make_clickable( trim( wp_strip_all_tags( $addon['value'] ) ) ) );
 
 		                if ( $args['label'] ) {
 		                    $strings[] = '<strong class="wc-item-meta-label">' . wp_kses_post( $name ) . ':</strong> ' . $value;
@@ -1099,7 +1156,7 @@ class WC_Appointment extends WC_Appointments_Data {
 		$return = array(
 			'name'      => __( 'Guest', 'woocommerce-appointments' ),
 			'full_name' => __( 'Guest', 'woocommerce-appointments' ),
-			'phone'   	=> '',
+			'phone'     => '',
 			'email'     => '',
 			'address'   => '',
 			'user_id'   => 0,
@@ -1108,12 +1165,13 @@ class WC_Appointment extends WC_Appointments_Data {
 		// Order has customer ID.
 		$order = $order ? $order : $this->get_order();
 		if ( $order ) {
-			$first_name  = $order->get_billing_first_name() ? $order->get_billing_first_name() : '';
-			$last_name   = $order->get_billing_last_name() ? $order->get_billing_last_name() : '';
-			$customer_id = 0 !== absint( $order->get_customer_id() );
-			$name        = trim( $first_name . ' ' . $last_name );
+			$first_name   = $order->get_billing_first_name() ? $order->get_billing_first_name() : '';
+			$last_name    = $order->get_billing_last_name() ? $order->get_billing_last_name() : '';
+			$customer_id  = 0 !== absint( $order->get_customer_id() );
+			$name         = trim( $first_name . ' ' . $last_name );
 			$display_name = $first_name || $last_name ? $name : __( 'Guest', 'woocommerce-appointments' );
 			if ( ! $customer_id ) {
+				/* translators: %s: Guest name */
 				$display_name = $first_name || $last_name ? sprintf( _x( '%s (Guest)', 'Guest string with name from appointment order in brackets', 'woocommerce-appointments' ), $name ) : $display_name;
 			}
 
@@ -1182,8 +1240,8 @@ class WC_Appointment extends WC_Appointments_Data {
 		$created_via    = $order ? $order->get_created_via() : null;
 
 		// Check if emails are set.
-		$is_reminder_set  = as_next_scheduled_action( 'wc-appointment-reminder', array( $this->get_id() ), 'wca' );
-		$is_complete_set  = as_next_scheduled_action( 'wc-appointment-complete', array( $this->get_id() ), 'wca' );
+		$is_reminder_set = as_next_scheduled_action( 'wc-appointment-reminder', array( $this->get_id() ), 'wca' );
+		$is_complete_set = as_next_scheduled_action( 'wc-appointment-complete', array( $this->get_id() ), 'wca' );
 
 		#error_log( var_export( $is_reminder_set, true ) );
 		#error_log( var_export( $is_complete_set, true ) );
@@ -1270,15 +1328,15 @@ class WC_Appointment extends WC_Appointments_Data {
 			case 'reminder':
 				if ( $this->get_start() && ! $this->passed_end_date() ) {
 					as_unschedule_action( 'wc-appointment-reminder', array( $this->get_id() ), 'wca' );
-					return is_null( as_schedule_single_action( $timezone_addition + strtotime( '-' . apply_filters( 'woocommerce_appointments_remind_before_time', $reminder_time ), $this->get_start() ), 'wc-appointment-reminder', array( $this->get_id() ), 'wca' ) );
+					return is_null( as_schedule_single_action( $timezone_addition + strtotime( '-' . apply_filters( 'woocommerce_appointments_remind_before_time', $reminder_time, $this ), $this->get_start() ), 'wc-appointment-reminder', array( $this->get_id() ), 'wca' ) );
 				}
 				break;
 			case 'complete':
 				if ( $this->get_end() ) {
 					as_unschedule_action( 'wc-appointment-complete', array( $this->get_id() ), 'wca' );
-					$return_complete = is_null( as_schedule_single_action( $timezone_addition + apply_filters( 'woocommerce_appointments_complete_time', $this->get_end() ), 'wc-appointment-complete', array( $this->get_id() ), 'wca' ) );
+					$return_complete = is_null( as_schedule_single_action( $timezone_addition + apply_filters( 'woocommerce_appointments_complete_time', $this->get_end(), $this ), 'wc-appointment-complete', array( $this->get_id() ), 'wca' ) );
 					as_unschedule_action( 'wc-appointment-follow-up', array( $this->get_id() ), 'wca' );
-					$return_follow_up = is_null( as_schedule_single_action( $timezone_addition + strtotime( '+' . apply_filters( 'woocommerce_appointments_follow_up_time', $follow_up_time ), $this->get_end() ), 'wc-appointment-follow-up', array( $this->get_id() ), 'wca' ) );
+					$return_follow_up = is_null( as_schedule_single_action( $timezone_addition + strtotime( '+' . apply_filters( 'woocommerce_appointments_follow_up_time', $follow_up_time, $this ), $this->get_end() ), 'wc-appointment-follow-up', array( $this->get_id() ), 'wca' ) );
 					return $return_complete || $return_follow_up;
 				}
 				break;
@@ -1316,6 +1374,23 @@ class WC_Appointment extends WC_Appointments_Data {
 			),
 			$this
 		);
+	}
+
+	/**
+	 * Returns the reschedule URL for an appointment
+	 *
+	 * @param string $redirect
+	 *
+	 * @return string
+	 */
+	public function get_reschedule_url( $redirect = '' ) {
+		$reschedule_page = esc_url( wc_get_endpoint_url( 'reschedule', $this->get_id() ) );
+
+		if ( ! $reschedule_page ) {
+			$reschedule_page = home_url();
+		}
+
+		return apply_filters( 'appointments_reschedule_appointment_url', $reschedule_page, $this );
 	}
 
 	/*
@@ -1380,12 +1455,14 @@ class WC_Appointment extends WC_Appointments_Data {
 			'was-in-cart' => __( 'Was In Cart', 'woocommerce-appointments' ),
 		);
 
-		$allowed_statuses = array_unique( array_merge(
-			$allowed_statuses,
-			get_wc_appointment_statuses( null, true ),
-			get_wc_appointment_statuses( 'user', true ),
-			get_wc_appointment_statuses( 'cancel', true )
-		) );
+		$allowed_statuses = array_unique(
+			array_merge(
+				$allowed_statuses,
+				get_wc_appointment_statuses( null, true ),
+				get_wc_appointment_statuses( 'user', true ),
+				get_wc_appointment_statuses( 'cancel', true )
+			)
+		);
 
 		$allowed_status_keys = array_keys( $allowed_statuses );
 
@@ -1407,7 +1484,7 @@ class WC_Appointment extends WC_Appointments_Data {
 	 * @return bool
 	 */
 	public function update_customer_status( $status ) {
-		$current_status	  = $this->get_customer_status( 'edit' );
+		$current_status   = $this->get_customer_status( 'edit' );
 		$allowed_statuses = get_wc_appointment_statuses( 'customer' );
 		$allowed_statuses = array_keys( $allowed_statuses );
 
@@ -1467,8 +1544,8 @@ class WC_Appointment extends WC_Appointments_Data {
 	public function is_scheduled_on_day( $slot_start, $slot_end ) {
 		_deprecated_function( __METHOD__, '4.2.0' );
 
-		$is_scheduled        = false;
-		$loop_date        = $this->get_start();
+		$is_scheduled         = false;
+		$loop_date            = $this->get_start();
 		$multiday_appointment = date( 'Y-m-d', $this->get_start() ) < date( 'Y-m-d', $this->get_end() );
 
 		if ( $multiday_appointment ) {

@@ -24,17 +24,9 @@
                 }
             }
             ?>
-            <input
-                type="hidden"
-                id="product_id"
-                name="product_id"
-                class="ajax_select2_products_and_variations"
-                data-multiple="false"
-                data-action="woocommerce_json_search_appointable_products"
-                data-placeholder="<?php esc_html_e( 'Select an appointable product...', 'woocommerce-appointments' ); ?>"
-                value="<?php echo $product_id; ?>"
-                data-selected="<?php echo esc_attr( $product_name ); ?>"
-                >
+            <select class="wc-product-search" id="product_id" name="product_id" data-placeholder="<?php esc_html_e( 'N/A', 'woocommerce-appointments' ); ?>" data-action="woocommerce_json_search_appointable_products">
+                <option value="<?php esc_attr_e( $product_id ); ?>" selected="selected"><?php esc_html_e( $product_name ); ?></option>';
+            </select>
         </p>
 
         <?php

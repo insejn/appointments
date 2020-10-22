@@ -108,7 +108,7 @@ echo make_clickable( sprintf( esc_html__( 'You can view and edit this appointmen
 	?>
 	(
 	<?php
-	printf( '<time datetime="%s">%s</time>', esc_attr( date_i18n( 'c', strtotime( $order_date ) ) ), esc_attr( date_i18n( wc_date_format(), strtotime( $order_date ) ) ) );
+	printf( '<time datetime="%s">%s</time>', esc_attr( date_i18n( 'c', strtotime( $order_date ) ) ), esc_attr( date_i18n( wc_appointments_date_format(), strtotime( $order_date ) ) ) );
 	?>
 	)</h2>
 

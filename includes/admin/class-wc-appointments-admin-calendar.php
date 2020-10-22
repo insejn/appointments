@@ -64,11 +64,11 @@ class WC_Appointments_Admin_Calendar {
 			$start_of_week  = absint( get_option( 'start_of_week', 1 ) );
 			$week_start     = strtotime( "previous sunday +{$start_of_week} day", strtotime( $day ) );
 			$week_end       = strtotime( '+1 week -1 min', $week_start );
-			$week_formatted = date( wc_date_format(), $week_start ) . ' &mdash; ' . date( wc_date_format(), $week_end );
+			$week_formatted = date( wc_appointments_date_format(), $week_start ) . ' &mdash; ' . date( wc_appointments_date_format(), $week_end );
 			$prev_week      = date( 'Y-m-d', strtotime( '-1 week', strtotime( $day ) ) );
 			$next_week      = date( 'Y-m-d', strtotime( '+1 week', strtotime( $day ) ) );
 
-			#$prev_day = date_i18n( wc_date_format(), strtotime( '-1 day', strtotime( $day ) ) );
+			#$prev_day = date_i18n( wc_appointments_date_format(), strtotime( '-1 day', strtotime( $day ) ) );
 			#print '<pre>'; print_r( $_REQUEST ); print '</pre>';
 
 			$args_filters = array(
@@ -227,10 +227,11 @@ class WC_Appointments_Admin_Calendar {
 		$datarray['event_customer'] = '';
 		$datarray['event_status']   = '';
 		$datarray['event_name']     = '';
+		$datarray['addons']         = '';
 		if ( $datarray['is_all_day'] ) {
 			$datarray['event_datetime'] = '';
 		} else {
-			$datarray['event_datetime'] = date( wc_time_format(), $datarray['start'] );
+			$datarray['event_datetime'] = date( wc_appointments_time_format(), $datarray['start'] );
 		}
 		if ( 'all_day' === $list ) {
 			$datarray['start_time'] = date( 'Y-m-d', $datarray['start'] );
@@ -265,8 +266,8 @@ class WC_Appointments_Admin_Calendar {
 			if ( $customer ) {
 				$datarray['event_customer'] = $customer->name;
 				$datarray['customer_name']  = $customer->full_name;
-				$datarray['customer_phone']  = preg_replace( '/\s+/', '', $customer->phone );
-				$datarray['customer_email']  = $customer->email;
+				$datarray['customer_phone'] = preg_replace( '/\s+/', '', $customer->phone );
+				$datarray['customer_email'] = $customer->email;
 				if ( $customer->user_id ) {
 					$datarray['customer_id']     = $customer->user_id;
 					$datarray['customer_url']    = get_edit_user_link( $customer->user_id );
@@ -282,6 +283,7 @@ class WC_Appointments_Admin_Calendar {
 			$event_product             = $event->get_product();
 			$datarray['product_id']    = $event->get_product_id();
 			$datarray['product_title'] = is_object( $event_product ) ? $event_product->get_title() : '';
+			$datarray['addons']        = esc_html( $event->get_addons() );
 			$datarray['edit_link']     = esc_url( admin_url( 'post.php?post=' . $event->get_id() . '&action=edit' ) );
 			$datarray['color']         = is_object( $event_product ) && $event_product->get_cal_color() ? $event_product->get_cal_color() : '#0073aa';
 		} else {
@@ -335,7 +337,7 @@ class WC_Appointments_Admin_Calendar {
 				$datarray['duration']       = '';
 				$datarray['event_datetime'] = '';
 			}
-			$datarray['edit_link'] = esc_url( admin_url( 'admin.php?page=wc-settings&tab=appointments' ) );
+			$datarray['edit_link'] = esc_url( admin_url( 'admin.php?page=wc-settings&tab=appointments&view=synced' ) );
 			$datarray['color']     = '#555';
 		}
 

@@ -1,4 +1,4 @@
-/* global wc_appointments_availability_filter_params */
+/* global wc_appointments_availability_filter_params, moment */
 jQuery( document ).ready( function( $ ) {
 	'use strict';
 
@@ -30,6 +30,7 @@ jQuery( document ).ready( function( $ ) {
 					changeMonth: true,
 					showButtonPanel: false,
 					minDate: 0,
+					onSelect: wc_appointments_availability_filter.onSelect,
 					firstDay: wc_appointments_availability_filter_params.firstday,
 					closeText: wc_appointments_availability_filter_params.closeText,
 					currentText: wc_appointments_availability_filter_params.currentText,
@@ -44,6 +45,26 @@ jQuery( document ).ready( function( $ ) {
 					isRTL: wc_appointments_availability_filter_params.isRTL
 				} );
 			} );
+		},
+
+		onSelect: function( date ) {
+			var form_field  = $( this ).closest( '.date_picker_inner' );
+			var parsed_date = date.split( '-' );
+			var year        = parseInt( parsed_date[0], 10 );
+			var month       = parseInt( parsed_date[1], 10 );
+			var day         = parseInt( parsed_date[2], 10 );
+			var ymdIndex    = year + '-' + month + '-' + day;
+
+			// Localize with Moment.
+			var moment_date = moment.utc( date );
+			var local_date  = moment_date.format( wc_appointments_availability_filter_params.dateFormat );
+			//console.log( local_date );
+
+			// Set fields
+			form_field.find( 'input.date-picker' ).val( '' );
+			form_field.find( 'input.date-picker-field' ).val( '' );
+			form_field.find( 'input.date-picker' ).val( local_date ).change();
+			form_field.find( 'input.date-picker-field' ).val( ymdIndex ).change();
 		}
 	};
 

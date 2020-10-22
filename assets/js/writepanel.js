@@ -11,6 +11,7 @@ jQuery( document ).ready( function( $ ) {
 			$( 'input#_virtual' ).on( 'change', this.wc_appointments_trigger_change_events );
 			$( 'input#_downloadable' ).on( 'change', this.wc_appointments_trigger_change_events );
 			$( '#_wc_appointment_user_can_cancel' ).on( 'change', this.wc_appointments_user_cancel );
+			$( '#_wc_appointment_user_can_reschedule' ).on( 'change', this.wc_appointments_user_reschedule );
 			$( '#product-type' ).on( 'change', this.wc_appointments_inventory_show );
 			$( '#product-type' ).on( 'change', this.wc_appointments_addon_style );
 			$( '#product_addons_data' ).on( 'click', '.wc-pao-addon-adjust-duration', this.wc_appointments_addon_adjust_duration );
@@ -44,6 +45,7 @@ jQuery( document ).ready( function( $ ) {
 			wc_appointments_writepanel.wc_appointments_sortable_rows();
 			wc_appointments_writepanel.wc_appointments_pickers();
 			wc_appointments_writepanel.wc_appointments_twilio_sms();
+			wc_appointments_writepanel.wc_appointments_exporter_title_action();
 		},
 		wc_appointments_rule_range_change: function() {
 			var input_this            = $( this );
@@ -303,7 +305,7 @@ jQuery( document ).ready( function( $ ) {
 			return false;
 		},
 		wc_appointments_trigger_change_events: function() {
-			$( '.wc_appointment_availability_type select, .wc_appointment_availability_type input, .wc_appointment_pricing_type select, #_wc_appointment_user_can_cancel, #_wc_appointment_has_price_label, #_wc_appointment_has_pricing, #_wc_appointment_duration_unit, #_wc_appointment_staff_assignment, #_stock, #_wc_appointment_qty, #_wc_appointment_qty_min, #_wc_appointment_qty_max, #_wc_appointment_has_restricted_days' ).change();
+			$( '.wc_appointment_availability_type select, .wc_appointment_availability_type input, .wc_appointment_pricing_type select, #_wc_appointment_user_can_cancel, #_wc_appointment_user_can_reschedule, #_wc_appointment_has_price_label, #_wc_appointment_has_pricing, #_wc_appointment_duration_unit, #_wc_appointment_staff_assignment, #_stock, #_wc_appointment_qty, #_wc_appointment_qty_min, #_wc_appointment_qty_max, #_wc_appointment_has_restricted_days' ).change();
 
 			return false;
 		},
@@ -312,6 +314,15 @@ jQuery( document ).ready( function( $ ) {
 				$( '.form-field.appointment-cancel-limit' ).show();
 			} else {
 				$( '.form-field.appointment-cancel-limit' ).hide();
+			}
+
+			return false;
+		},
+		wc_appointments_user_reschedule: function() {
+			if ( $( this ).is( ':checked' ) ) {
+				$( '.form-field.appointment-reschedule-limit' ).show();
+			} else {
+				$( '.form-field.appointment-reschedule-limit' ).hide();
 			}
 
 			return false;
@@ -784,6 +795,26 @@ jQuery( document ).ready( function( $ ) {
 			} );
 
 			return false;
+		},
+		wc_appointments_exporter_title_action: function() {
+			// Add buttons to appointment screen.
+			var $appointmen_screen = $( '.edit-php.post-type-wc_appointment' );
+			var	$title_action      = $appointmen_screen.find( '.page-title-action:first' );
+			var	$blankslate        = $appointmen_screen.find( '.woocommerce-BlankState' );
+
+			if ( 0 === $blankslate.length ) {
+				if ( wc_appointments_writepanel_js_params.exporter.permission ) {
+					$title_action.after(
+						'<a href="' +
+						wc_appointments_writepanel_js_params.exporter.url +
+						'" class="page-title-action">' +
+						wc_appointments_writepanel_js_params.exporter.string +
+						'</a>'
+					);
+				}
+			} else {
+				$title_action.hide();
+			}
 		}
 	};
 

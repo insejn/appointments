@@ -85,7 +85,7 @@ if ( $wc_order ) {
 	/* translators: %s: order number */
 	echo sprintf( __( 'Order number: %s', 'woocommerce-appointments'), $wc_order->get_order_number() ) . "\n";
 	/* translators: %s: order date */
-	echo sprintf( __( 'Order date: %s', 'woocommerce-appointments'), date_i18n( wc_date_format(), strtotime( $order_date ) ) ) . "\n";
+	echo sprintf( __( 'Order date: %s', 'woocommerce-appointments'), date_i18n( wc_appointments_date_format(), strtotime( $order_date ) ) ) . "\n";
 
 	do_action( 'woocommerce_email_order_meta', $wc_order, $sent_to_admin, $plain_text, $email );
 

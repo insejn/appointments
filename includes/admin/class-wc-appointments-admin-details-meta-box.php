@@ -52,10 +52,10 @@ class WC_Appointments_Admin_Details_Meta_Box {
 	 * Constructor.
 	 */
 	public function __construct() {
-		$this->id = 'woocommerce-appointment-data';
-		$this->title = __( 'Appointment Details', 'woocommerce-appointments' );
-		$this->context = 'normal';
-		$this->priority = 'high';
+		$this->id         = 'woocommerce-appointment-data';
+		$this->title      = __( 'Appointment Details', 'woocommerce-appointments' );
+		$this->context    = 'normal';
+		$this->priority   = 'high';
 		$this->post_types = array( 'wc_appointment' );
 
 		add_action( 'save_post', array( $this, 'meta_box_save' ), 10, 2 );
@@ -74,7 +74,7 @@ class WC_Appointments_Admin_Details_Meta_Box {
 			$max_date = strtotime( "+{$max['value']} {$max['unit']}", current_time( 'timestamp' ) );
 			if ( $appointment->get_start() > $max_date || $appointment->get_end() > $max_date ) {
 				/* translators: %s: maximum appointable date */
-				echo '<div class="notice notice-warning"><p>' . sprintf( __( 'This appointment is scheduled over the products allowed max appointment date (%s). Please ensure this is correct.', 'woocommerce-appointments' ), date_i18n( wc_date_format(), $max_date ) ) . '</p></div>';
+				echo '<div class="notice notice-warning"><p>' . sprintf( __( 'This appointment is scheduled over the products allowed max appointment date (%s). Please ensure this is correct.', 'woocommerce-appointments' ), date_i18n( wc_appointments_date_format(), $max_date ) ) . '</p></div>';
 			}
 		}
 
@@ -164,7 +164,7 @@ class WC_Appointments_Admin_Details_Meta_Box {
 							<?php else : ?>
 								<select name="_appointment_order_id" id="_appointment_order_id" data-placeholder="<?php esc_html_e( 'N/A', 'woocommerce-appointments' ); ?>" data-allow_clear="true">
 									<?php if ( $appointment->get_order_id() && $order ) : ?>
-										<option selected="selected" value="<?php echo esc_attr( $appointment->get_order_id() ); ?>"><?php echo esc_html( $order->get_order_number() . ' &ndash; ' . date_i18n( wc_date_format(), strtotime( is_callable( array( $order, 'get_date_created' ) ) ? $order->get_date_created() : $order->post_date ) ) ); ?></option>
+										<option selected="selected" value="<?php echo esc_attr( $appointment->get_order_id() ); ?>"><?php echo esc_html( $order->get_order_number() . ' &ndash; ' . date_i18n( wc_appointments_date_format(), strtotime( is_callable( array( $order, 'get_date_created' ) ) ? $order->get_date_created() : $order->post_date ) ) ); ?></option>
 									<?php endif; ?>
 								</select>
 							<?php endif; ?>
@@ -223,7 +223,7 @@ class WC_Appointments_Admin_Details_Meta_Box {
 						?>
 						<p class="form-field form-field-wide">
 							<label for="product_id"><?php esc_html_e( 'Product:', 'woocommerce-appointments' ); ?></label>
-							<select class="wc-product-search" id="product_id" name="product_id" data-placeholder="<?php esc_html_e( 'N/A', 'woocommerce-appointments' ); ?>" data-action="woocommerce_json_search_appointable_products">';
+							<select class="wc-product-search" id="product_id" name="product_id" data-placeholder="<?php esc_html_e( 'N/A', 'woocommerce-appointments' ); ?>" data-action="woocommerce_json_search_appointable_products">
 								<option value="<?php esc_attr_e( $product_id ); ?>" selected="selected"><?php esc_html_e( $product_name ); ?></option>';
 							</select>
 						</p>
@@ -248,7 +248,7 @@ class WC_Appointments_Admin_Details_Meta_Box {
 						?>
 						<p class="form-field form-field-wide">
 							<label for="staff_ids"><?php esc_html_e( 'Staff:', 'woocommerce-appointments' ); ?></label>
-							<select multiple="multiple" id="staff_ids" name="staff_ids[]" class="multiselect wc-enhanced-select" data-placeholder="<?php esc_html_e( 'N/A', 'woocommerce-appointments' ); ?>">
+							<select multiple="multiple" id="staff_ids" name="staff_ids[]" class="multiselect wc-enhanced-select" data-placeholder="<?php esc_html_e( 'N/A', 'woocommerce-appointments' ); ?>" data-allow_clear="true">
 								<?php
 								foreach ( $appointable_staff as $key => $value ) {
 									echo '<option value="' . esc_attr( $key ) . '" ' . selected( in_array( $key, $staff_ids ), true ) . '>' . esc_html__( $value, 'woocommerce-appointments' ) . '</option>';
@@ -260,20 +260,20 @@ class WC_Appointments_Admin_Details_Meta_Box {
 
 						// Parent product ID.
 						woocommerce_wp_text_input( array(
-							'type' 			=> 'number',
-							'id' 			=> '_appointment_parent_id',
-							'label' 		=> __( 'Parent Appointment ID', 'woocommerce-appointments' ),
-							'placeholder'	=> 'N/A',
+							'type'        => 'number',
+							'id'          => '_appointment_parent_id',
+							'label'       => __( 'Parent Appointment ID', 'woocommerce-appointments' ),
+							'placeholder' => 'N/A',
 						) );
 
 						// Number of customers.
 						if ( $appointment->get_qty( 'edit' ) ) {
 							woocommerce_wp_text_input( array(
-								'type' 			=> 'number',
-								'id'			=> '_appointment_qty',
-								'label' 		=> __( 'Qty', 'woocommerce-appointments' ),
-								'placeholder'	=> '0',
-								'value' 		=> $appointment->get_qty( 'edit' ),
+								'type'          => 'number',
+								'id'            => '_appointment_qty',
+								'label'         => __( 'Qty', 'woocommerce-appointments' ),
+								'placeholder'   => '0',
+								'value'         => $appointment->get_qty( 'edit' ),
 								'wrapper_class' => 'appointment-qty',
 							) );
 						}
@@ -285,46 +285,46 @@ class WC_Appointments_Admin_Details_Meta_Box {
 
 						<?php
 						woocommerce_wp_checkbox( array(
-							'id'			=> '_appointment_all_day',
-							'label'			=> __( 'All Day:', 'woocommerce-appointments' ),
-							'description' 	=> __( 'Check this box if the appointment lasts all day.', 'woocommerce-appointments' ),
-							'value' 		=> $appointment->get_all_day( 'edit' ) ? 'yes' : 'no',
+							'id'          => '_appointment_all_day',
+							'label'       => __( 'All Day:', 'woocommerce-appointments' ),
+							'description' => __( 'Check this box if the appointment lasts all day.', 'woocommerce-appointments' ),
+							'value'       => $appointment->get_all_day( 'edit' ) ? 'yes' : 'no',
 						) );
 
 						woocommerce_wp_text_input( array(
-							'id'			=> 'appointment_start_date',
-							'type'			=> 'text',
-							'label'			=> __( 'Start Date:', 'woocommerce-appointments' ),
-							'placeholder'	=> 'yyyy-mm-dd',
-							'value'			=> date( 'Y-m-d', $appointment->get_start( 'edit' ) ),
-							'class' 		=> 'date-picker',
+							'id'          => 'appointment_start_date',
+							'type'        => 'text',
+							'label'       => __( 'Start Date:', 'woocommerce-appointments' ),
+							'placeholder' => 'yyyy-mm-dd',
+							'value'       => date( 'Y-m-d', $appointment->get_start( 'edit' ) ),
+							'class'       => 'date-picker',
 						) );
 
 						woocommerce_wp_text_input( array(
-							'id'			=> 'appointment_start_time',
-							'type' 			=> 'time',
-							'label' 		=> __( 'Start Time:', 'woocommerce-appointments' ),
-							'placeholder' 	=> 'hh:mm',
-							'value' 		=> date( 'H:i', $appointment->get_start( 'edit' ) ),
-							'class' 		=> 'time-picker',
+							'id'          => 'appointment_start_time',
+							'type'        => 'time',
+							'label'       => __( 'Start Time:', 'woocommerce-appointments' ),
+							'placeholder' => 'hh:mm',
+							'value'       => date( 'H:i', $appointment->get_start( 'edit' ) ),
+							'class'       => 'time-picker',
 						) );
 
 						woocommerce_wp_text_input( array(
-							'id'			=> 'appointment_end_date',
-							'type' 			=> 'text',
-							'label' 		=> __( 'End Date:', 'woocommerce-appointments' ),
-							'placeholder'	=> 'yyyy-mm-dd',
-							'value' 		=> date( 'Y-m-d', $appointment->get_end( 'edit' ) ),
-							'class' 		=> 'date-picker',
+							'id'          => 'appointment_end_date',
+							'type'        => 'text',
+							'label'       => __( 'End Date:', 'woocommerce-appointments' ),
+							'placeholder' => 'yyyy-mm-dd',
+							'value'       => date( 'Y-m-d', $appointment->get_end( 'edit' ) ),
+							'class'       => 'date-picker',
 						) );
 
 						woocommerce_wp_text_input( array(
-							'id'			=> 'appointment_end_time',
-							'type' 			=> 'time',
-							'label' 		=> __( 'End Time:', 'woocommerce-appointments' ),
-							'placeholder' 	=> 'hh:mm',
-							'value' 		=> date( 'H:i', $appointment->get_end( 'edit' ) ),
-							'class' 		=> 'time-picker',
+							'id'          => 'appointment_end_time',
+							'type'        => 'time',
+							'label'       => __( 'End Time:', 'woocommerce-appointments' ),
+							'placeholder' => 'hh:mm',
+							'value'       => date( 'H:i', $appointment->get_end( 'edit' ) ),
+							'class'       => 'time-picker',
 						) );
 
 						// Customer timezone.
@@ -547,15 +547,15 @@ class WC_Appointments_Admin_Details_Meta_Box {
 		self::$saved_meta_box = true;
 
 		// Get appointment object.
-		$appointment    = get_wc_appointment( $post_id );
-		$product_id		= wc_clean( $_POST['product_id'] ) ? wc_clean( $_POST['product_id'] ) : $appointment->get_product_id();
-		$start_date		= explode( '-', wc_clean( $_POST['appointment_start_date'] ) );
-		$end_date		= explode( '-', wc_clean( $_POST['appointment_end_date'] ) );
-		$start_time		= explode( ':', wc_clean( $_POST['appointment_start_time'] ) );
-		$end_time		= explode( ':', wc_clean( $_POST['appointment_end_time'] ) );
-		$start			= mktime( $start_time[0], $start_time[1], 0, $start_date[1], $start_date[2], $start_date[0] );
-		$end			= mktime( $end_time[0], $end_time[1], 0, $end_date[1], $end_date[2], $end_date[0] );
-		$product		= wc_get_product( $product_id );
+		$appointment = get_wc_appointment( $post_id );
+		$product_id  = wc_clean( $_POST['product_id'] ) ? wc_clean( $_POST['product_id'] ) : $appointment->get_product_id();
+		$start_date  = explode( '-', wc_clean( $_POST['appointment_start_date'] ) );
+		$end_date    = explode( '-', wc_clean( $_POST['appointment_end_date'] ) );
+		$start_time  = explode( ':', wc_clean( $_POST['appointment_start_time'] ) );
+		$end_time    = explode( ':', wc_clean( $_POST['appointment_end_time'] ) );
+		$start       = mktime( $start_time[0], $start_time[1], 0, $start_date[1], $start_date[2], $start_date[0] );
+		$end         = mktime( $end_time[0], $end_time[1], 0, $end_date[1], $end_date[2], $end_date[0] );
+		$product     = wc_get_product( $product_id );
 
 		// New appointment meta.
 		$props = array(

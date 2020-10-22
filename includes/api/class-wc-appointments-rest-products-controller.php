@@ -118,6 +118,9 @@ class WC_Appointments_REST_Products_Controller extends WC_REST_Products_Controll
 			'user_can_cancel'         => $product->get_user_can_cancel(),
 			'cancel_limit_unit'       => $product->get_cancel_limit_unit( $context ),
 			'cancel_limit'            => $product->get_cancel_limit( $context ),
+			'user_can_reschedule'     => $product->get_user_can_reschedule(),
+			'reschedule_limit_unit'   => $product->get_reschedule_limit_unit( $context ),
+			'reschedule_limit'        => $product->get_reschedule_limit( $context ),
 			'requires_confirmation'   => $product->get_requires_confirmation( $context ),
 			'customer_timezones'      => $product->get_customer_timezones( $context ),
 			'cal_color'               => $product->get_cal_color(),
@@ -187,6 +190,10 @@ class WC_Appointments_REST_Products_Controller extends WC_REST_Products_Controll
 
 		if ( isset( $request['can_be_cancelled'] ) ) {
 			$product->set_user_can_cancel( $request['can_be_cancelled'] );
+		}
+
+		if ( isset( $request['can_be_rescheduled'] ) ) {
+			$product->set_user_can_reschedule( $request['can_be_rescheduled'] );
 		}
 
 		return $product;

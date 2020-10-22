@@ -322,10 +322,10 @@ class WC_Appointments_Availability extends WC_Appointments_Data implements Array
 	 */
 	public function get_formatted_date( $date_ts = null, $date_format= null, $time_format = null ) {
 		if ( is_null( $date_format ) ) {
-			$date_format = apply_filters( 'woocommerce_appointments_date_format', wc_date_format() );
+			$date_format = apply_filters( 'woocommerce_appointments_date_format', wc_appointments_date_format() );
 		}
 		if ( is_null( $time_format ) ) {
-			$time_format = apply_filters( 'woocommerce_appointments_time_format', ', ' . wc_time_format() );
+			$time_format = apply_filters( 'woocommerce_appointments_time_format', ', ' . wc_appointments_time_format() );
 		}
 
 		if ( $this->is_all_day() ) {

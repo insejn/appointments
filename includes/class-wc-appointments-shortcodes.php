@@ -30,7 +30,7 @@ class WC_Appointments_Shortcodes {
 	public static function appointment_form( $atts = array() ) {
 		if ( ! isset( $atts['id'] ) && ! isset( $atts['sku'] ) ) {
 			if ( is_singular() && 'product' === get_post_type() ) {
-				$atts = is_array( $atts ) ? $atts : array();
+				$atts       = is_array( $atts ) ? $atts : array();
 				$atts['id'] = get_the_ID();
 			} else {
 				return '';

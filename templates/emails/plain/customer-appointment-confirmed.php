@@ -11,7 +11,7 @@
  * the readme will list any important changes.
  *
  * @see         https://docs.woocommerce.com/document/template-structure/
- * @version     4.8.0
+ * @version     4.10.0
  * @since       3.4.0
  */
 
@@ -48,7 +48,7 @@ echo "\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n\
 
 $wc_order = $appointment->get_order();
 if ( $wc_order ) {
-	if ( 'pending' === $wc_order->get_status() ) {
+	if ( 'pending' === $wc_order->get_status() && 0 < $wc_order->get_total() ) {
 		/* translators: %s: checkout payment url */
 		echo sprintf( __( 'To pay for this appointment please use the following link: %s', 'woocommerce-appointments' ), $wc_order->get_checkout_payment_url() ) . "\n\n";
 	}
@@ -66,7 +66,7 @@ if ( $wc_order ) {
 	/* translators: %s: order number */
 	echo sprintf( __( 'Order number: %s', 'woocommerce-appointments'), $wc_order->get_order_number() ) . "\n";
 	/* translators: %s: order date */
-	echo sprintf( __( 'Order date: %s', 'woocommerce-appointments'), date_i18n( wc_date_format(), strtotime( $order_date ) ) ) . "\n";
+	echo sprintf( __( 'Order date: %s', 'woocommerce-appointments'), date_i18n( wc_appointments_date_format(), strtotime( $order_date ) ) ) . "\n";
 
 	do_action( 'woocommerce_email_order_meta', $wc_order, $sent_to_admin, $plain_text, $email );
 

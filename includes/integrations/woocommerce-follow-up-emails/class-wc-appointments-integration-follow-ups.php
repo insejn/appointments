@@ -361,13 +361,18 @@ class WC_Appointments_Integration_WCFUE {
              * @var $appointment WC_Appointment
              * @var $appointment_product WC_Product_Appointment
              */
-            $appointment                   = get_wc_appointment( $appointment_id );
+            $appointment = get_wc_appointment( $appointment_id );
+
+            if ( ! $appointment ) {
+                return $variables;
+            }
+
             $appointment_product           = $appointment->get_product();
             $appointment_order             = $appointment->get_order();
-            $appointment_start             = $appointment->get_start_date( wc_date_format() . ' ', wc_time_format() );
-            $appointment_end               = $appointment->get_end_date( wc_date_format() . ' ', wc_time_format() );
-            $appointment_date              = $appointment->get_start_date( wc_date_format(), '' );
-            $appointment_time              = $appointment->get_start_date( '', wc_time_format() );
+            $appointment_start             = $appointment->get_start_date( wc_appointments_date_format() . ' ', wc_appointments_time_format() );
+            $appointment_end               = $appointment->get_end_date( wc_appointments_date_format() . ' ', wc_appointments_time_format() );
+            $appointment_date              = $appointment->get_start_date( wc_appointments_date_format(), '' );
+            $appointment_time              = $appointment->get_start_date( '', wc_appointments_time_format() );
             $appointment_duration          = $appointment->get_duration();
             $appointment_amount            = wc_price( $appointment->cost );
             $appointment_staff             = ( $staff = $appointment->get_staff_members( true ) ) ? $staff : '';
@@ -422,8 +427,8 @@ class WC_Appointments_Integration_WCFUE {
             if ( $appointment_order ) {
     			$variables['order_billing_phone']    = WC_FUE_Compatibility::get_order_prop( $appointment_order, 'billing_phone' );
     			$variables['order_shipping_phone']   = ( isset( $appointment_order->shipping_phone ) ) ? $appointment_order->shipping_phone : '';
-    			$variables['order_date']             = date_i18n( get_option( 'date_format' ), strtotime( WC_FUE_Compatibility::get_order_prop( $appointment_order, 'order_date' ) ) );
-    			$variables['order_datetime']         = date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( WC_FUE_Compatibility::get_order_prop( $appointment_order, 'order_date' ) ) );
+    			$variables['order_date']             = date_i18n( wc_appointments_date_format(), strtotime( WC_FUE_Compatibility::get_order_prop( $appointment_order, 'order_date' ) ) );
+    			$variables['order_datetime']         = date_i18n( wc_appointments_date_format() . ' ' . wc_appointments_time_format(), strtotime( WC_FUE_Compatibility::get_order_prop( $appointment_order, 'order_date' ) ) );
     			$variables['order_billing_address']  = $appointment_order->get_formatted_billing_address();
     			$variables['order_shipping_address'] = $appointment_order->get_formatted_shipping_address();
     			$variables['order_number']           = $appointment_order->get_order_number();
@@ -461,11 +466,11 @@ class WC_Appointments_Integration_WCFUE {
         $variables['item_url']                      = '#url';
         $variables['item_category']                 = 'Appointments category';
         $variables['item_quantity']                 = 1;
-        $variables['appointment_start']             = date( wc_date_format() . ' ' . wc_time_format(), current_time( 'timestamp' ) + 86400 );
-        $variables['appointment_end']               = date( wc_date_format() . ' ' . wc_time_format(), current_time( 'timestamp' ) + ( 86400 * 2 ) );
+        $variables['appointment_start']             = date( wc_appointments_date_format() . ' ' . wc_appointments_time_format(), current_time( 'timestamp' ) + 86400 );
+        $variables['appointment_end']               = date( wc_appointments_date_format() . ' ' . wc_appointments_time_format(), current_time( 'timestamp' ) + ( 86400 * 2 ) );
         $variables['appointment_duration']          = '3 Hours';
-        $variables['appointment_date']              = date( wc_date_format(), current_time( 'timestamp' ) + 86400 );
-        $variables['appointment_time']              = date( wc_time_format(), current_time( 'timestamp' ) + 86400 );
+        $variables['appointment_date']              = date( wc_appointments_date_format(), current_time( 'timestamp' ) + 86400 );
+        $variables['appointment_time']              = date( wc_appointments_time_format(), current_time( 'timestamp' ) + 86400 );
         $variables['appointment_amount']            = wc_price( 77 );
         $variables['appointment_staff']             = 'Staff Name';
         $variables['appointment_id']                = 1;
@@ -929,14 +934,14 @@ class WC_Appointments_Integration_WCFUE {
 
             $appointments_last_status = get_post_meta( $email->id, '_appointments_last_status', true );
 
-            error_log( var_export( $meta, true ) );
-            error_log( var_export( $last_status, true ) );
+            #error_log( var_export( $meta, true ) );
+            #error_log( var_export( $last_status, true ) );
 
             if ( $appointments_last_status && $appointments_last_status != $last_status ) {
                 continue;
             }
 
-            error_log( var_export( 'what?', true ) );
+            #error_log( var_export( 'what?', true ) );
 
             if ( $this->is_category_excluded( $appointment, $email ) ) {
                 continue;
@@ -1050,7 +1055,7 @@ class WC_Appointments_Integration_WCFUE {
                     }
 
                     $email_trigger = apply_filters( 'fue_interval_str', $email->get_trigger_string(), $email );
-                    $send_date     = date( wc_date_format() . ' ' . wc_time_format(), $insert['send_on'] );
+                    $send_date     = date( wc_appointments_date_format() . ' ' . wc_appointments_time_format(), $insert['send_on'] );
 
                     $note = sprintf(
                         __('Email queued: %s scheduled on %s<br/>Trigger: %s', 'woocommerce-appointments'),
